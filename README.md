@@ -20,7 +20,7 @@ https://pathakaayush02.github.io/Student_Life_Prob_Solver
 2. Ensure you have the following folder structure:
    - `index.html`
    - `workspace.html`
-   - `styles.css`
+   - `style.css`
    - `app.js`
 3. Double-click `index.html` to open it in your default web browser.
 
