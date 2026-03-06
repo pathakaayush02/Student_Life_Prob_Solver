@@ -1606,4 +1606,42 @@ padding:12px;
 }
 
 }
+    @media screen and (max-width:768px){
+
+*{
+box-sizing:border-box;
+}
+
+body{
+overflow-x:hidden;
+}
+
+.container,
+.workspace,
+.tool-container,
+.card{
+width:100% !important;
+max-width:100% !important;
+padding:10px !important;
+}
+
+button{
+width:100% !important;
+}
+
+input,
+select,
+textarea{
+width:100% !important;
+}
+
+.tool-grid,
+.grid,
+.row{
+display:flex !important;
+flex-direction:column !important;
+gap:10px;
+}
+
+}
 }
