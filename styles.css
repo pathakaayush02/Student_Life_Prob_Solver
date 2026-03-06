@@ -1528,4 +1528,82 @@ input:focus, select:focus, textarea:focus {
     .planner-grid { grid-template-columns: 1fr; }
     .hero { padding: 4rem 0 2rem; }
     .tool-grid { grid-template-columns: 1fr; }
+    
+/* ===== MOBILE FIX ===== */
+@media (max-width: 768px){
+
+body{
+overflow-x:hidden;
+}
+
+/* main workspace */
+.workspace{
+display:flex;
+flex-direction:column;
+gap:15px;
+padding:12px;
+}
+
+/* tool container */
+.tool-container{
+width:100%;
+max-width:100%;
+}
+
+/* study planner grid */
+.planner-grid{
+display:grid;
+grid-template-columns:1fr;
+gap:12px;
+}
+
+/* side panels (stats / exp) */
+.stats-panel,
+.exp-panel,
+.side-panel{
+position:static;
+width:100%;
+margin-top:10px;
+}
+
+/* cards */
+.card,
+.tool-card{
+width:100%;
+}
+
+/* buttons */
+button{
+width:100%;
+}
+
+/* inputs */
+input,
+select,
+textarea{
+width:100%;
+}
+
+/* headings scale */
+h1{
+font-size:1.6rem;
+}
+
+h2{
+font-size:1.3rem;
+}
+
+/* images responsive */
+img{
+max-width:100%;
+height:auto;
+}
+
+/* footer */
+footer{
+text-align:center;
+padding:12px;
+}
+
+}
 }
