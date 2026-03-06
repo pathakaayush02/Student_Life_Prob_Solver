@@ -16,6 +16,10 @@
     --motion-medium: 280ms;
     --motion-slow: 450ms;
     --easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --bp-mobile: 767px;
+    --bp-tablet-min: 768px;
+    --bp-tablet-max: 1199px;
+    --bp-desktop-min: 1200px;
 }
 
 * {
@@ -36,12 +40,13 @@ body {
     display: flex;
     flex-direction: column;
     animation: pageFadeIn var(--motion-slow) var(--easing-standard);
+    overflow-x: hidden;
 }
 
 .container {
     max-width: var(--container-width);
     margin: 0 auto;
-    padding: 0 2rem;
+    padding: 0 1rem;
     width: 100%;
 }
 
@@ -52,12 +57,14 @@ h1 {
     margin-bottom: 1rem;
     letter-spacing: -0.025em;
     background: linear-gradient(to bottom right, #fff, #94a3b8);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
 .accent {
     background: var(--accent-gradient);
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -380,6 +387,12 @@ input:focus, select:focus, textarea:focus {
     overflow: hidden;
 }
 
+.btn:focus-visible,
+.tool-card:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--accent-glow);
+}
+
 .btn::before {
     content: '';
     position: absolute;
@@ -420,6 +433,8 @@ input:focus, select:focus, textarea:focus {
     background: var(--danger);
     color: white;
 }
+
+.w-100 { width: 100%; }
 
 /* Tool Specific: Study Planner */
 .planner-layout {
@@ -616,6 +631,15 @@ input:focus, select:focus, textarea:focus {
     }
 }
 
+@media (min-width: 768px) and (max-width: 1199px) {
+    .planner-layout {
+        grid-template-columns: 1fr;
+    }
+    .exp-panel {
+        position: static;
+    }
+}
+
 @media (max-width: 768px) {
     .planner-grid {
         grid-template-columns: 1fr;
@@ -684,6 +708,12 @@ input:focus, select:focus, textarea:focus {
         max-width: 300px;
         margin: 0 auto;
     }
+}
+
+@media (max-width: 767px) {
+    .exp-float { display: none; }
+    .btn, .btn-large { width: 100%; }
+    .stress-actions { position: static; background: none; justify-content: stretch; }
 }
 
 /* Stress Checker Styles */

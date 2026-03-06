@@ -393,6 +393,7 @@ function renderStudyPlanner(container) {
                 <div class="task-controls">
                     <div class="checkbox-custom ${task.completed ? 'checked' : ''}" 
                          onclick="toggleTaskCompletion('${task.id}', this)"
+                         data-task-id="${task.id}"
                          role="checkbox" 
                          aria-checked="${task.completed}" 
                          tabindex="0"
@@ -407,6 +408,15 @@ function renderStudyPlanner(container) {
                 <button class="btn btn-danger btn-sm" onclick="deleteStudyTask('${task.id}')">Delete</button>
             `;
             taskList.appendChild(div);
+            const checkbox = div.querySelector('.checkbox-custom');
+            if (checkbox) {
+                checkbox.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        window.toggleTaskCompletion(checkbox.dataset.taskId, checkbox);
+                    }
+                });
+            }
         });
 
         totalHoursDisplay.textContent = totalHours.toFixed(1);
@@ -1890,4 +1900,13 @@ function renderPomodoroTimer(container) {
     if ("Notification" in window && Notification.permission !== "granted") {
         Notification.requestPermission();
     }
+
+    // Redraw on resize
+    let resizeTimeout = null;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            updateUI();
+        }, 150);
+    });
 }
