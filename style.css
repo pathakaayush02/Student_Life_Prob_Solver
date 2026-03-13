@@ -6,47 +6,55 @@
    CSS CUSTOM PROPERTIES (DESIGN TOKENS)
    ========================================================================== */
 :root {
-  /* Colors */
-  --bg-page: #F0F4FF;
+  /* Metallic Color Palette - Professional & Premium */
+  --bg-page: #FAFAFA;
   --bg-surface: #FFFFFF;
-  --bg-soft-highlight: #EEF2FF;
-  --bg-hero-gradient: linear-gradient(135deg, #EEF2FF 0%, #F0F4FF 100%);
+  --bg-soft-highlight: #F8F9FA;
+  --bg-hero-gradient: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%);
   
-  --color-primary: #6366F1;
-  --color-primary-hover: #4F46E5;
-  --color-success: #10B981;
-  --color-amber: #F59E0B;
-  --color-danger: #EF4444;
+  /* Metallic Accents */
+  --color-primary: #2C3E50;
+  --color-primary-hover: #1A252F;
+  --color-accent: #B8860B;
+  --color-accent-light: #D4AF37;
+  --color-metallic-silver: #C0C0C0;
+  --color-metallic-gold: #FFD700;
+  --color-metallic-bronze: #CD7F32;
+  --color-metallic-copper: #B87333;
   
-  --color-heading: #1E293B;
-  --color-body: #334155;
-  --color-muted: #64748B;
-  --color-border: #E2E8F0;
+  --color-success: #27AE60;
+  --color-amber: #F39C12;
+  --color-danger: #E74C3C;
+  
+  --color-heading: #2C3E50;
+  --color-body: #34495E;
+  --color-muted: #7F8C8D;
+  --color-border: #ECF0F1;
   
   /* Typography */
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   
-  --font-size-h1: 2.6rem;
-  --font-size-h2: 1.4rem;
-  --font-size-h3: 1.1rem;
-  --font-size-body: 1rem;
-  --font-size-caption: 0.85rem;
+  --font-size-h1: 3.2rem;
+  --font-size-h2: 1.8rem;
+  --font-size-h3: 1.3rem;
+  --font-size-body: 1.05rem;
+  --font-size-caption: 0.9rem;
   
-  --font-weight-h1: 800;
-  --font-weight-h2: 700;
-  --font-weight-h3: 600;
-  --font-weight-body: 400;
-  --font-weight-button: 600;
+  --font-weight-h1: 900;
+  --font-weight-h2: 800;
+  --font-weight-h3: 700;
+  --font-weight-body: 500;
+  --font-weight-button: 700;
   
-  --line-height-heading: 1.2;
-  --line-height-body: 1.7;
+  --line-height-heading: 1.1;
+  --line-height-body: 1.6;
   
   /* Spacing */
-  --container-max-width: 1120px;
-  --spacing-section-desktop: 64px;
-  --spacing-section-mobile: 40px;
-  --spacing-card: 28px;
-  --spacing-gap: 24px;
+  --container-max-width: 1200px;
+  --spacing-section-desktop: 80px;
+  --spacing-section-mobile: 48px;
+  --spacing-card: 32px;
+  --spacing-gap: 28px;
   
   /* Border Radius */
   --radius-card: 16px;
@@ -143,14 +151,14 @@ a:hover {
 }
 
 /* ==========================================================================
-   BUTTONS
+   BUTTONS - Premium Metallic Design
    ========================================================================== */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 12px 24px;
+  padding: 14px 28px;
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-button);
   border-radius: var(--radius-button);
@@ -158,67 +166,194 @@ a:hover {
   cursor: pointer;
   text-decoration: none;
   transition: all var(--transition-base);
-  min-height: 44px;
-  min-width: 44px;
+  min-height: 48px;
+  min-width: 48px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.6s ease;
+}
+
+.btn:hover::before {
+  left: 100%;
 }
 
 .btn:focus {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--color-metallic-gold);
   outline-offset: 2px;
 }
 
 .btn-primary {
-  background-color: var(--color-primary);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
   color: white;
+  box-shadow: 0 4px 15px rgba(44, 62, 80, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-primary:hover {
-  background-color: var(--color-primary-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-button);
+  background: linear-gradient(135deg, var(--color-primary-hover) 0%, var(--color-accent-light) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(44, 62, 80, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .btn-secondary {
-  background-color: var(--bg-surface);
+  background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%);
   color: var(--color-primary);
-  border: 2px solid var(--color-primary);
+  border: 2px solid var(--color-metallic-silver);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .btn-secondary:hover {
-  background-color: var(--bg-soft-highlight);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, var(--color-metallic-silver) 0%, #D3D3D3 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 .btn-ghost {
-  background-color: transparent;
-  color: var(--color-muted);
+  background: transparent;
+  color: var(--color-body);
+  border: 2px solid var(--color-metallic-silver);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .btn-ghost:hover {
-  background-color: var(--bg-soft-highlight);
-  color: var(--color-body);
+  background: linear-gradient(135deg, var(--color-metallic-silver) 0%, #D3D3D3 100%);
+  color: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 .btn-large {
-  padding: 16px 32px;
+  padding: 18px 36px;
   font-size: 1.1rem;
 }
 
 /* ==========================================================================
-   CARDS
+   DOODLES & DECORATIVE ELEMENTS
+   ========================================================================== */
+.doodle {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.6;
+  animation: float 6s ease-in-out infinite;
+}
+
+.doodle-1 {
+  top: 10%;
+  right: 5%;
+  width: 80px;
+  height: 80px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M20 50 Q30 30 50 50 Q70 70 80 50' stroke='%23B8860B' stroke-width='2' fill='none'/%3E%3Ccircle cx='30' cy='40' r='3' fill='%23FFD700'/%3E%3Ccircle cx='70' cy='60' r='3' fill='%23FFD700'/%3E%3C/svg%3E") no-repeat center;
+  background-size: contain;
+}
+
+.doodle-2 {
+  bottom: 15%;
+  left: 3%;
+  width: 60px;
+  height: 60px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M25 25 L75 25 M25 50 L75 50 M25 75 L75 75' stroke='%23C0C0C0' stroke-width='1.5' fill='none'/%3E%3Ccircle cx='50' cy='50' r='15' stroke='%23FFD700' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat center;
+  background-size: contain;
+  animation-delay: 2s;
+}
+
+.doodle-3 {
+  top: 60%;
+  right: 8%;
+  width: 70px;
+  height: 70px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,20 80,80 20,80' fill='%23B87333' stroke='%23FFD700' stroke-width='1'/%3E%3Ccircle cx='50' cy='50' r='5' fill='%23FFD700'/%3E%3C/svg%3E") no-repeat center;
+  background-size: contain;
+  animation-delay: 4s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  25% { transform: translateY(-10px) rotate(5deg); }
+  50% { transform: translateY(0px) rotate(-5deg); }
+  75% { transform: translateY(-5px) rotate(3deg); }
+}
+
+.hero-doodle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 120px;
+  height: 120px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='50' font-family='Arial' font-size='40' fill='%23B8860B' text-anchor='middle' dominant-baseline='middle'%3E✨%3C/text%3E%3Ctext x='30' y='30' font-family='Arial' font-size='20' fill='%23FFD700' text-anchor='middle' dominant-baseline='middle'%3E⭐%3C/text%3E%3Ctext x='70' y='70' font-family='Arial' font-size='25' fill='%23C0C0C0' text-anchor='middle' dominant-baseline='middle'%3E🚀%3C/text%3E%3C/svg%3E") no-repeat center;
+  background-size: contain;
+  animation: float 8s ease-in-out infinite;
+}
+
+.card-doodle {
+  position: absolute;
+  top: -15px;
+  right: -15px;
+  width: 40px;
+  height: 40px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='20' stroke='%23FFD700' stroke-width='2' fill='none'/%3E%3Cpath d='M50 30 L50 70 M30 50 L70 50' stroke='%23B8860B' stroke-width='1'/%3E%3C/svg%3E") no-repeat center;
+  background-size: contain;
+}
+
+/* ==========================================================================
+   CARDS - Premium Professional Design
    ========================================================================== */
 .card {
-  background-color: var(--bg-surface);
+  background: linear-gradient(145deg, #FFFFFF 0%, #F8F9FA 100%);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
   padding: var(--spacing-card);
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all var(--transition-slow);
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+  transition: left 0.6s ease;
+}
+
+.card:hover::before {
+  left: 100%;
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(184, 134, 11, 0.2);
+  border-color: var(--color-metallic-gold);
+}
+
+.tool-card {
+  background: linear-gradient(145deg, #FFFFFF 0%, #F8F9FA 100%);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--spacing-card);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all var(--transition-slow);
+  position: relative;
+  overflow: hidden;
+}
+
+.tool-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(184, 134, 11, 0.2);
+  border-color: var(--color-metallic-gold);
 }
 
 /* ==========================================================================
@@ -274,12 +409,11 @@ a:hover {
 }
 
 /* ==========================================================================
-   HERO SECTION
+   HERO SECTION - Premium & Fun Design
    ========================================================================== */
 .hero {
-  background: var(--bg-hero-gradient);
+  background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 50%, #E8E8E8 100%);
   padding: var(--spacing-section-desktop) 0;
-  text-align: center;
   position: relative;
   overflow: hidden;
 }
@@ -288,26 +422,41 @@ a:hover {
   content: '';
   position: absolute;
   top: -50%;
-  right: -20%;
-  width: 80%;
+  left: -50%;
+  width: 200%;
   height: 200%;
-  background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.06) 0%, transparent 70%);
-  pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.05) 0%, transparent 70%);
+  animation: rotate 30s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .hero-content {
   position: relative;
-  z-index: 1;
+  z-index: 2;
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .hero h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-h1);
+  color: var(--color-heading);
   margin-bottom: 1.5rem;
+  line-height: var(--line-height-heading);
+  animation: slideInUp 0.8s ease-out;
 }
 
 .hero-subtitle {
-  font-size: 1.2rem;
-  color: var(--color-muted);
-  margin-bottom: 2.5rem;
+  font-size: 1.3rem;
+  color: var(--color-body);
+  margin-bottom: 3rem;
+  font-weight: 500;
+  animation: slideInUp 0.8s ease-out 0.2s both;
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
@@ -315,9 +464,57 @@ a:hover {
 
 .hero-actions {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
   justify-content: center;
   flex-wrap: wrap;
+  animation: slideInUp 0.8s ease-out 0.4s both;
+}
+
+/* Fun Stats Bar Animation */
+.stats-bar {
+  background: linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 100%);
+  padding: 2rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.stats-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.05), transparent);
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  50% { left: 100%; }
+  100% { left: 100%; }
+}
+
+.stat-item {
+  text-align: center;
+  padding: 1.5rem;
+  background: linear-gradient(145deg, #FFFFFF 0%, #F8F9FA 100%);
+  border-radius: var(--radius-card);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-item:hover {
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.stat-icon {
+  color: var(--color-metallic-gold);
+  margin-bottom: 1rem;
+  filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.3));
 }
 
 /* ==========================================================================
