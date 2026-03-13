@@ -7,9 +7,12 @@
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="home-page">
+    <a href="#main" class="skip-link">Skip to main content</a>
+    
     <nav class="top-nav">
         <div class="container">
             <div class="breadcrumb" id="breadcrumb">
@@ -19,103 +22,111 @@
     </nav>
 
     <header class="hero">
-        <div class="container">
-            <h1>Student Life <span class="accent">Problem Solver</span></h1>
-            <p class="hero-subtitle">Your all-in-one toolkit to master study plans, track expenses, manage stress, and explore your future career.</p>
+        <div class="container hero-content">
+            <h1>Your Student Life, <span class="text-primary">Sorted.</span></h1>
+            <p class="hero-subtitle">Plan smarter. Spend wisely. Stay calm. Build your future.</p>
+            <div class="hero-actions">
+                <a href="#tools" class="btn btn-primary btn-large">Explore Tools</a>
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLSe6nYD_lLoes6Zy4NjtTU-vK3_RiAi3dzfyId7WUJ3dbGVVJg/viewform?usp=dialog" 
+                   class="btn btn-secondary btn-large" 
+                   target="_blank" 
+                   rel="noopener">Take the Survey</a>
+            </div>
         </div>
     </header>
 
-    <main class="container">
-        <section class="tool-grid">
-            <a href="workspace.html?tool=study" class="tool-card glow-card" aria-label="Open Study Planner">
-                <div class="card-content">
-                    <div class="icon">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon accent">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
+    <section class="stats-bar">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <i data-lucide="zap" class="stat-icon" width="24" height="24"></i>
+                    <span class="stat-text">5 Powerful Tools</span>
+                </div>
+                <div class="stat-item">
+                    <i data-lucide="users" class="stat-icon" width="24" height="24"></i>
+                    <span class="stat-text">Built for Students</span>
+                </div>
+                <div class="stat-item">
+                    <i data-lucide="gift" class="stat-icon" width="24" height="24"></i>
+                    <span class="stat-text">Free Forever</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <main id="main" class="container">
+        <section id="tools" class="tool-section">
+            <h2 class="text-center">Everything You Need in One Place</h2>
+            <div class="tool-grid">
+                <a href="workspace.html?tool=study" class="tool-card" aria-label="Open Study Planner">
+                    <div class="tool-icon">
+                        <i data-lucide="book-open" width="24" height="24"></i>
                     </div>
                     <h2>Study Planner</h2>
-                    <p>Organize your subjects and track study hours to stay ahead.</p>
-                </div>
-            </a>
-            <a href="workspace.html?tool=expense" class="tool-card glow-card" aria-label="Open Expense Tracker">
-                <div class="card-content">
-                    <div class="icon">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon accent">
-                            <line x1="12" y1="1" x2="12" y2="23"></line>
-                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                        </svg>
+                    <p>Organize your subjects, set goals, and track every study hour so exams never catch you off guard.</p>
+                    <span class="btn btn-primary">Open Tool</span>
+                </a>
+                
+                <a href="workspace.html?tool=expense" class="tool-card" aria-label="Open Expense Tracker">
+                    <div class="tool-icon">
+                        <i data-lucide="wallet" width="24" height="24"></i>
                     </div>
                     <h2>Expense Tracker</h2>
-                    <p>Keep your budget in check with easy expense logging.</p>
-                </div>
-            </a>
-            <a href="workspace.html?tool=stress" class="tool-card glow-card" aria-label="Open Stress Checker">
-                <div class="card-content">
-                    <div class="icon">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon accent">
-                            <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 16a6 6 0 1 1 6-6 6 6 0 0 1-6 6z"></path>
-                            <circle cx="12" cy="12" r="2"></circle>
-                        </svg>
+                    <p>Log daily spending, set a monthly budget, and finally understand where your money actually goes.</p>
+                    <span class="btn btn-primary">Open Tool</span>
+                </a>
+                
+                <a href="workspace.html?tool=stress" class="tool-card" aria-label="Open Stress Checker">
+                    <div class="tool-icon">
+                        <i data-lucide="heart-pulse" width="24" height="24"></i>
                     </div>
                     <h2>Stress Checker</h2>
-                    <p>Check your stress levels and get tips to stay calm.</p>
-                </div>
-            </a>
-            <a href="workspace.html?tool=career" class="tool-card glow-card" aria-label="Open Career Helper">
-                <div class="card-content">
-                    <div class="icon">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon accent">
-                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                        </svg>
+                    <p>Check in with yourself, measure stress levels, and get actionable tips to stay balanced.</p>
+                    <span class="btn btn-primary">Open Tool</span>
+                </a>
+                
+                <a href="workspace.html?tool=career" class="tool-card" aria-label="Open Career Helper">
+                    <div class="tool-icon">
+                        <i data-lucide="briefcase" width="24" height="24"></i>
                     </div>
                     <h2>Career Helper</h2>
-                    <p>Explore career paths based on your interests and skills.</p>
-                </div>
-            </a>
-            <a href="workspace.html?tool=pomodoro" class="tool-card glow-card" aria-label="Open Focus Timer">
-                <div class="card-content">
-                     <div class="icon">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-icon accent">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polyline points="12 6 12 12 16 14"></polyline>
-                        </svg>
+                    <p>Discover career paths that match your interests and skills before you have to decide.</p>
+                    <span class="btn btn-primary">Open Tool</span>
+                </a>
+                
+                <a href="workspace.html?tool=pomodoro" class="tool-card" aria-label="Open Focus Timer">
+                    <div class="tool-icon">
+                        <i data-lucide="timer" width="24" height="24"></i>
                     </div>
                     <h2>Focus Timer</h2>
-                    <p>Boost productivity with the Pomodoro technique and earn EXP.</p>
-                </div>
-            </a>
+                    <p>Use Pomodoro intervals to study with full focus, earn EXP, and build a real productivity streak.</p>
+                    <span class="btn btn-primary">Open Tool</span>
+                </a>
+            </div>
         </section>
     </main>
 
     <footer class="main-footer">
         <div class="container">
+            <div class="footer-links">
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLSd9VF4FiCjKlkKU8ktZ4zb5EFn6d158yx3F82NLGf09Ohgd2g/viewform?usp=dialog" 
+                   target="_blank" 
+                   rel="noopener">Feedback</a>
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLSe6nYD_lLoes6Zy4NjtTU-vK3_RiAi3dzfyId7WUJ3dbGVVJg/viewform?usp=dialog" 
+                   target="_blank" 
+                   rel="noopener">Take Survey</a>
+            </div>
             <p>&copy; 2026 Student Life Problem Solver</p>
         </div>
     </footer>
 
-    <div class="cta-container hidden" id="ctaContainer">
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSd9VF4FiCjKlkKU8ktZ4zb5EFn6d158yx3F82NLGf09Ohgd2g/viewform?usp=dialog" 
-           class="cta-btn feedback-btn" 
-           target="_blank" 
-           rel="noopener" 
-           aria-label="Open feedback form in new tab">
-            Feedback
-        </a>
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSe6nYD_lLoes6Zy4NjtTU-vK3_RiAi3dzfyId7WUJ3dbGVVJg/viewform?usp=dialog" 
-           class="cta-btn survey-btn" 
-           target="_blank" 
-           rel="noopener" 
-           aria-label="Open survey form in new tab">
-            Take Survey
-        </a>
-    </div>
-
     <script src="app.js"></script>
+    <script>
+        // Initialize Lucide icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    </script>
 </body>
 </html>
 
