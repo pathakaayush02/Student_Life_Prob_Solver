@@ -296,12 +296,13 @@ a:hover {
 
 .card-doodle {
   position: absolute;
-  top: -15px;
-  right: -15px;
-  width: 40px;
-  height: 40px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='20' stroke='%23FFD700' stroke-width='2' fill='none'/%3E%3Cpath d='M50 30 L50 70 M30 50 L70 50' stroke='%23B8860B' stroke-width='1'/%3E%3C/svg%3E") no-repeat center;
+  top: -10px;
+  right: -10px;
+  width: 50px;
+  height: 50px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='20' stroke='%23FFD700' stroke-width='3' fill='none'/%3E%3Cpath d='M50 30 L50 70 M30 50 L70 50' stroke='%23B8860B' stroke-width='2'/%3E%3C/svg%3E") no-repeat center;
   background-size: contain;
+  opacity: 0.8;
 }
 
 /* ==========================================================================
@@ -629,9 +630,11 @@ a:hover {
 
 .tool-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-card-hover);
+  box-shadow: 0 0 0 2px rgba(180, 140, 0, 0.4), 0 8px 24px rgba(180, 140, 0, 0.12);
+  border-color: rgba(180, 140, 0, 0.5);
   text-decoration: none;
   color: inherit;
+  transition: all 0.2s ease;
 }
 
 .tool-icon {
@@ -654,6 +657,10 @@ a:hover {
   color: var(--color-muted);
   margin-bottom: 1.5rem;
   line-height: 1.6;
+}
+
+.tool-card .btn {
+  border-radius: 12px;
 }
 
 /* ==========================================================================
@@ -762,6 +769,7 @@ a:hover {
 .text-danger { color: var(--color-danger); }
 .text-muted { color: var(--color-muted); }
 .text-primary { color: var(--color-primary); }
+.text-accent { color: var(--color-accent); }
 
 .bg-success { background-color: var(--color-success); }
 .bg-danger { background-color: var(--color-danger); }
