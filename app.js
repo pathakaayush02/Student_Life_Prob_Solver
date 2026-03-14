@@ -1785,8 +1785,8 @@ function renderPomodoroTimer(container) {
                     
                     <div style="background: var(--bg-soft-highlight); padding: 1rem; border-radius: var(--radius-button);">
                         <div style="font-weight: 600; margin-bottom: 0.5rem;">EXP Rewards</div>
-                        <div style="color: var(--color-muted); font-size: 0.9rem; margin-bottom: 0.25rem;">â€¢ Focus Session: +10 EXP</div>
-                        <div style="color: var(--color-muted); font-size: 0.9rem;">â€¢ Full Set (4 sessions): +20 Bonus EXP</div>
+                        <div style="color: var(--color-muted); font-size: 0.9rem; margin-bottom: 0.25rem;">&#8226; Focus Session: +10 EXP</div>
+                        <div style="color: var(--color-muted); font-size: 0.9rem;">&#8226; Full Set (4 sessions): +20 Bonus EXP</div>
                     </div>
                     
                     <button id="resetStatsBtn" class="btn btn-ghost" style="width: 100%; margin-top: 1rem;">Reset Stats</button>
@@ -1814,8 +1814,153 @@ function renderPomodoroTimer(container) {
         lucide.createIcons();
     }
 
-    // Timer state and logic would continue here...
-    // For now, let's just close the function to fix syntax errors
+    // Timer state
+    let timer = null;
+    let timeLeft = 25 * 60;
+    let isRunning = false;
+    let sessionCount = 0;
+    let totalExp = 0;
+    let totalFocusMinutes = 0;
+    const WORK_TIME = 25 * 60;
+    const SHORT_BREAK = 5 * 60;
+    const LONG_BREAK = 15 * 60;
+    let currentPhase = "focus";
+
+    function startPause() {
+        if (isRunning) {
+            clearInterval(timer);
+            isRunning = false;
+            startPauseBtn.innerHTML = '<i data-lucide="play" width="20" height="20" style="margin-right: 0.5rem;"></i>Start';
+        } else {
+            isRunning = true;
+            startPauseBtn.innerHTML = '<i data-lucide="pause" width="20" height="20" style="margin-right: 0.5rem;"></i>Pause';
+            timer = setInterval(() => {
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    isRunning = false;
+                    onSessionComplete();
+                    return;
+                }
+                timeLeft--;
+                updateDisplay();
+            }, 1000);
+        }
+    }
+
+    function onSessionComplete() {
+        if (currentPhase === "focus") {
+            sessionCount++;
+            totalExp += 10;
+            totalFocusMinutes += 25;
+
+            if (sessionCount % 4 === 0) {
+                totalExp += 20;
+            }
+
+            updateStats();
+            saveStats();
+
+            if (sessionCount % 4 === 0) {
+                currentPhase = "longbreak";
+                timeLeft = LONG_BREAK;
+            } else {
+                currentPhase = "shortbreak";
+                timeLeft = SHORT_BREAK;
+            }
+        } else {
+            currentPhase = "focus";
+            timeLeft = WORK_TIME;
+        }
+
+        updateDisplay();
+        updatePhaseLabel();
+        flashScreen();
+    }
+
+    function resetTimer() {
+        clearInterval(timer);
+        isRunning = false;
+        currentPhase = "focus";
+        timeLeft = WORK_TIME;
+        updateDisplay();
+        updatePhaseLabel();
+        startPauseBtn.innerHTML = '<i data-lucide="play" width="20" height="20" style="margin-right: 0.5rem;"></i>Start';
+    }
+
+    function updateDisplay() {
+        const mins = Math.floor(timeLeft / 60).toString().padStart(2, "0");
+        const secs = (timeLeft % 60).toString().padStart(2, "0");
+        timeLeftDisplay.textContent = `${mins}:${secs}`;
+    }
+
+    function updatePhaseLabel() {
+        const labels = {
+            focus: "Focus Session",
+            shortbreak: "Short Break",
+            longbreak: "Long Break"
+        };
+        sessionLabelDisplay.textContent = labels[currentPhase];
+        cycleTextDisplay.textContent = `${sessionCount % 4} / 4 sessions until long break`;
+    }
+
+    function updateStats() {
+        totalExpDisplay.textContent = totalExp;
+        totalSetsDisplay.textContent = Math.floor(sessionCount / 4);
+        totalFocusTimeDisplay.textContent = totalFocusMinutes + " min";
+    }
+
+    function saveStats() {
+        localStorage.setItem("clutch_exp", totalExp);
+        localStorage.setItem("clutch_sessions", sessionCount);
+        localStorage.setItem("clutch_focus_minutes", totalFocusMinutes);
+    }
+
+    function loadStats() {
+        totalExp = parseInt(localStorage.getItem("clutch_exp")) || 0;
+        sessionCount = parseInt(localStorage.getItem("clutch_sessions")) || 0;
+        totalFocusMinutes = parseInt(localStorage.getItem("clutch_focus_minutes")) || 0;
+        updateStats();
+    }
+
+    function flashScreen() {
+        document.body.style.transition = "background 0.3s";
+        document.body.style.background = "#fffbe6";
+        setTimeout(() => document.body.style.background = "", 600);
+    }
+
+    function resetStats() {
+        if (confirm("Reset all your stats? This cannot be undone.")) {
+            totalExp = 0;
+            sessionCount = 0;
+            totalFocusMinutes = 0;
+            localStorage.removeItem("clutch_exp");
+            localStorage.removeItem("clutch_sessions");
+            localStorage.removeItem("clutch_focus_minutes");
+            updateStats();
+        }
+    }
+
+    // Event listeners
+    startPauseBtn.addEventListener('click', startPause);
+    resetBtn.addEventListener('click', resetTimer);
+    skipBtn.addEventListener('click', () => {
+        if (currentPhase === "focus") {
+            currentPhase = "shortbreak";
+            timeLeft = SHORT_BREAK;
+        } else {
+            currentPhase = "focus";
+            timeLeft = WORK_TIME;
+        }
+        resetTimer();
+        updatePhaseLabel();
+    });
+
+    resetStatsBtn.addEventListener('click', resetStats);
+
+    // Load stats on page load
+    loadStats();
+    updateDisplay();
+    updatePhaseLabel();
 }
 
 // Initialize Lucide icons when DOM is ready
