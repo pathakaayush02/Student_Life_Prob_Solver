@@ -905,6 +905,61 @@ a:hover {
 }
 
 /* ==========================================================================
+   STRESS CHECKER STYLING
+   ========================================================================== */
+.emoji-scale {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.emoji-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  background: var(--bg-surface);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  flex: 1;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.emoji-option:hover {
+  border-color: var(--color-accent);
+  background: var(--bg-soft-highlight);
+}
+
+.emoji-option input[type="radio"] {
+  margin: 0;
+}
+
+.emoji-option input[type="radio"]:checked + .emoji-option {
+  border-color: var(--color-accent);
+  background: var(--bg-soft-highlight);
+  box-shadow: 0 0 0 2px rgba(184, 134, 11, 0.2);
+}
+
+.stress-question {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--bg-surface);
+}
+
+.stress-question legend {
+  font-weight: 600;
+  color: var(--color-heading);
+  margin-bottom: 1rem;
+  padding: 0;
+}
+
+/* ==========================================================================
    FOCUS & ACCESSIBILITY
    ========================================================================== */
 *:focus {

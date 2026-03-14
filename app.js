@@ -546,7 +546,7 @@ function renderExpenseTracker(container) {
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="expAmount" class="form-label">Amount (â‚¹)</label>
+                            <label for="expAmount" class="form-label">Amount (₹)</label>
                             <input type="number" id="expAmount" class="form-input" step="0.01" min="0" placeholder="0.00" required>
                         </div>
                         <button type="submit" class="btn btn-primary">Log Expense</button>
@@ -556,7 +556,7 @@ function renderExpenseTracker(container) {
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                         <h2>Transaction History</h2>
-                        <div id="totalDisplay" style="font-size: 1.5rem; font-weight: 700; color: var(--color-heading);">â‚¹0.00</div>
+                        <div id="totalDisplay" style="font-size: 1.5rem; font-weight: 700; color: var(--color-heading);">₹0.00</div>
                     </div>
                     <div id="expenseList"></div>
                 </div>
@@ -574,7 +574,7 @@ function renderExpenseTracker(container) {
                     </div>
                     
                     <div class="form-group">
-                        <label for="savingsAmount" class="form-label">Monthly Savings Target (â‚¹)</label>
+                        <label for="savingsAmount" class="form-label">Monthly Savings Target (₹)</label>
                         <input type="number" id="savingsAmount" class="form-input" min="0" step="0.01" placeholder="e.g. 500">
                     </div>
 
@@ -651,7 +651,7 @@ function renderExpenseTracker(container) {
         }
 
         if (savingsPercent >= 10) {
-            savingsMessage.innerHTML = `You saved ${savingsPercent}% â€” ðŸŽ‰ You earned ${newPoints} points!`;
+            savingsMessage.innerHTML = `You saved ${savingsPercent}% — You earned ${newPoints} points!`;
         } else {
             savingsMessage.textContent = 'Save at least 10% to earn points.';
         }
@@ -680,7 +680,7 @@ function renderExpenseTracker(container) {
                             </div>
                             <div style="display: flex; align-items: center; gap: 1rem;">
                                 <span class="badge badge-primary" style="font-size: 0.75rem;">${exp.category}</span>
-                                <span style="font-weight: 700; color: var(--color-heading);">â‚¹${parseFloat(exp.amount).toFixed(2)}</span>
+                                <span style="font-weight: 700; color: var(--color-heading);">₹${parseFloat(exp.amount).toFixed(2)}</span>
                             </div>
                         </div>
                         <button class="btn btn-ghost" style="color: var(--color-danger);" 
@@ -694,7 +694,7 @@ function renderExpenseTracker(container) {
             });
         }
         
-        totalDisplay.textContent = `â‚¹${total.toFixed(2)}`;
+        totalDisplay.textContent = `₹${total.toFixed(2)}`;
         updateSavingsUI();
         
         // Re-initialize Lucide icons for new elements
@@ -762,7 +762,7 @@ function renderStressChecker(container) {
         
         <div class="card">
             <div id="stressContent">
-                <p style="margin-bottom: 2rem;">Answer these 10 quick questions to check your current stress level. Be honest â€” this is for you.</p>
+                <p style="margin-bottom: 2rem;">Answer these 10 quick questions to check your current stress level. Be honest — this is for you.</p>
 
                 <div style="margin-bottom: 2rem;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
@@ -774,13 +774,15 @@ function renderStressChecker(container) {
                     </div>
                 </div>
 
-                <form id="stressForm" novalidate>
+                <div id="stressForm">
                     <div id="stressQuestions"></div>
                     <p id="stressValidation" class="text-danger" style="display: none;">Please answer all 10 questions to see your result.</p>
                     <div style="text-align: center; margin-top: 2rem;">
-                        <button type="submit" id="stressSubmitBtn" class="btn btn-primary btn-large" disabled>See My Stress Meter</button>
+                        <button type="button" onclick="calculateStress()" class="btn btn-primary btn-large">See My Stress Meter</button>
                     </div>
-                </form>
+                </div>
+
+                <div id="stress-result" style="display:none;"></div>
 
                 <div id="stressResultWrapper" style="display: none;">
                     <div style="text-align: center; margin-bottom: 2rem;">
@@ -814,16 +816,16 @@ function renderStressChecker(container) {
         "How often do you feel like you have too many responsibilities at once?",
         "How often do you skip breaks or hobbies because you feel too busy?",
         "How often do you feel irritated or lose patience with friends or family?",
-        "How often do you feel like you are not doing â€œenoughâ€, even when you try?",
+        "How often do you feel like you are not doing \"enough\", even when you try?",
         "How often do you feel alone with your stress or worries?"
     ];
 
     const OPTIONS = [
-        { value: 1, emoji: "ðŸ˜Š", label: "Never" },
-        { value: 2, emoji: "ðŸ™‚", label: "Almost Never" },
-        { value: 3, emoji: "ðŸ˜", label: "Sometimes" },
-        { value: 4, emoji: "ðŸ˜Ÿ", label: "Fairly Often" },
-        { value: 5, emoji: "ðŸ˜«", label: "Very Often" }
+        { value: 1, label: "Never" },
+        { value: 2, label: "Almost Never" },
+        { value: 3, label: "Sometimes" },
+        { value: 4, label: "Fairly Often" },
+        { value: 5, label: "Very Often" }
     ];
 
     const totalQuestions = QUESTIONS.length;
@@ -883,7 +885,16 @@ function renderStressChecker(container) {
     const getAnsweredCount = () => responses.filter((v) => typeof v === 'number').length;
 
     const updateProgress = () => {
-        const answered = getAnsweredCount();
+        let answered = 0;
+        
+        // Count answered questions directly from DOM
+        for (let i = 1; i <= 10; i++) {
+            const selected = document.querySelector(`input[name="q${i}"]:checked`);
+            if (selected) {
+                answered++;
+            }
+        }
+        
         const percent = Math.round((answered / totalQuestions) * 100);
         progressFill.style.width = `${percent}%`;
         progressBar.setAttribute('aria-valuenow', String(percent));
@@ -899,10 +910,10 @@ function renderStressChecker(container) {
         if (normalizedScore <= 13) {
             return {
                 label: "Cool & Collected",
-                why: "Your answers suggest youâ€™re handling stress well most of the time.",
+                why: "Your answers suggest you're handling stress well most of the time.",
                 tips: [
                     "Keep using healthy habits that already work for you.",
-                    "Protect your sleep, breaks, and hobbies â€” they are your superpower.",
+                    "Protect your sleep, breaks, and hobbies — they are your superpower.",
                     "Notice small stress signals early and respond kindly to yourself."
                 ],
                 severity: "low"
@@ -925,7 +936,7 @@ function renderStressChecker(container) {
             why: "Your answers show high stress that deserves attention and support.",
             tips: [
                 "Talk to a trusted adult, teacher, or counselor about how you feel.",
-                "Do not handle everything alone â€” ask for help with tasks or deadlines.",
+                "Do not handle everything alone — ask for help with tasks or deadlines.",
                 "Create a small daily routine that includes rest, food, and movement."
             ],
             severity: "high"
@@ -1046,10 +1057,6 @@ function renderStressChecker(container) {
             input.value = String(opt.value);
             input.required = true;
 
-            const span = document.createElement('span');
-            span.className = 'emoji-face';
-            span.textContent = `${opt.emoji} ${opt.label}`;
-
             input.addEventListener('change', () => {
                 responses[index] = opt.value;
                 saveStressState();
@@ -1057,7 +1064,7 @@ function renderStressChecker(container) {
             });
 
             label.appendChild(input);
-            label.appendChild(span);
+            label.appendChild(document.createTextNode(opt.label));
             scale.appendChild(label);
         });
 
@@ -1088,32 +1095,86 @@ function renderStressChecker(container) {
 
     updateProgress();
     loadStressState();
+}
 
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const answered = getAnsweredCount();
-        if (answered !== totalQuestions) {
-            validationHint.classList.remove('hidden');
-            validationHint.setAttribute('role', 'alert');
-            return;
+// Global functions for stress checker
+function calculateStress() {
+    let total = 0;
+    let answered = 0;
+
+    for (let i = 1; i <= 10; i++) {
+        const selected = document.querySelector(`input[name="q${i}"]:checked`);
+        if (selected) {
+            total += parseInt(selected.value);
+            answered++;
         }
-        validationHint.classList.add('hidden');
-        validationHint.removeAttribute('role');
+    }
 
-        const rawScore = calculateStressScore();
-        const normalizedScore = Math.max(0, Math.min(40, rawScore - totalQuestions));
-        renderStressResult(normalizedScore, false);
-        saveStressState();
-    });
+    if (answered < 10) {
+        alert("Please answer all 10 questions before checking your stress level.");
+        return;
+    }
 
-    retakeBtn.addEventListener('click', () => {
-        resultWrapper.classList.add('hidden');
-        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
+    showResult(total);
+}
 
-    clearBtn.addEventListener('click', () => {
-        clearStressState();
-    });
+function showResult(score) {
+    const resultDiv = document.getElementById("stress-result");
+    resultDiv.style.display = "block";
+    resultDiv.scrollIntoView({ behavior: "smooth" });
+
+    let level, message, color, tips;
+
+    if (score <= 15) {
+        level = "Low Stress";
+        color = "#4caf50";
+        message = "You're handling things really well! Keep up your healthy habits.";
+        tips = ["Maintain your sleep schedule", "Keep doing what's working", "Help a friend who might be struggling"];
+    } else if (score <= 25) {
+        level = "Moderate Stress";
+        color = "#ff9800";
+        message = "You're managing but feeling the pressure. Time for some self-care.";
+        tips = ["Take short breaks between study sessions", "Try 5 minutes of deep breathing daily", "Talk to a friend about what's on your mind"];
+    } else if (score <= 35) {
+        level = "High Stress";
+        color = "#f44336";
+        message = "You're carrying a lot right now. Please don't ignore this.";
+        tips = ["Prioritize sleep above all else", "Break big tasks into tiny steps", "Reach out to someone you trust today"];
+    } else {
+        level = "Very High Stress";
+        color = "#9c27b0";
+        message = "This is serious. You deserve real support right now.";
+        tips = ["Talk to a counsellor or trusted adult", "Take one day at a time", "You are not alone — please reach out"];
+    }
+
+    resultDiv.innerHTML = `
+        <div style="border: 2px solid ${color}; border-radius: 16px; padding: 24px; margin-top: 24px; text-align: center;">
+            <h2 style="color: ${color}; font-size: 28px; margin-bottom: 8px;">${level}</h2>
+            <p style="font-size: 16px; color: #444; margin-bottom: 20px;">${message}</p>
+            <div style="background: #f5f5f5; border-radius: 12px; padding: 16px; text-align: left;">
+                <p style="font-weight: 600; margin-bottom: 10px;">What you can do right now:</p>
+                <ul style="list-style: none; padding: 0;">
+                    ${tips.map(t => `<li style="padding: 6px 0; border-bottom: 1px solid #eee;">✓ ${t}</li>`).join("")}
+                </ul>
+            </div>
+            <button onclick="resetStress()" style="margin-top: 20px; padding: 10px 24px; background: #7a6a1e; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 14px;">Retake Quiz</button>
+        </div>
+    `;
+}
+
+function resetStress() {
+    document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+    const resultDiv = document.getElementById("stress-result");
+    resultDiv.style.display = "none";
+    resultDiv.innerHTML = "";
+    
+    // Reset progress bar to 0%
+    const progressFill = document.getElementById("stressProgressFill");
+    const progressText = document.getElementById("stressProgressText");
+    if (progressFill) progressFill.style.width = "0%";
+    if (progressText) progressText.textContent = "0% complete";
+    
+    window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 /* -------------------------------------------------------------------------- */
