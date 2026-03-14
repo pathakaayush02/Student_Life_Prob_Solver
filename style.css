@@ -905,6 +905,42 @@ a:hover {
 }
 
 /* ==========================================================================
+   CAREER HELPER CHIPS
+   ========================================================================== */
+.chip {
+  display: inline-block;
+  padding: 8px 16px;
+  margin: 6px;
+  border-radius: 20px;
+  border: 2px solid #b8960c;
+  background: white;
+  color: #3d3000;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.chip:hover {
+  background: #fdf3c0;
+  box-shadow: 0 0 8px rgba(184, 150, 12, 0.4);
+}
+
+.chip.selected {
+  background: #b8960c;
+  color: white;
+  box-shadow: 0 0 12px rgba(184, 150, 12, 0.6);
+}
+
+.chip-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0;
+}
+
+/* ==========================================================================
    STRESS CHECKER STYLING
    ========================================================================== */
 .emoji-scale {

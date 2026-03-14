@@ -1353,227 +1353,327 @@ function renderCareerHelper(container) {
             </div>
         </div>
         
-        <div class="planner-layout">
-            <div class="planner-main">
-                <div class="card">
-                    <h2>Choose Your Interests</h2>
-                    <p class="text-muted" style="margin-bottom: 1.5rem;">Select multiple fields to get better matches.</p>
-                    <div id="interestContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 2rem;">
-                        ${INTEREST_CATEGORIES.map(cat => `
-                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.75rem; background: var(--bg-surface); border: 1px solid var(--color-border); border-radius: var(--radius-button); transition: all var(--transition-base);">
-                                <input type="checkbox" class="interest-checkbox" value="${cat}" style="display: none;">
-                                <i data-lucide="square" width="16" height="16" class="checkbox-icon" style="color: var(--color-muted);"></i>
-                                <i data-lucide="check-square" width="16" height="16" class="checkbox-checked-icon" style="color: var(--color-primary); display: none;"></i>
-                                <span>${cat}</span>
-                            </label>
-                        `).join('')}
-                    </div>
-                    <div style="display: flex; gap: 1rem;">
-                        <button id="getSuggestions" class="btn btn-primary" style="flex: 1;">Get Career Suggestions</button>
-                        <button id="clearInterests" class="btn btn-ghost" style="flex: 1;">Clear Selection</button>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h2>Career Suggestions</h2>
-                        <span id="matchCount" class="badge badge-primary" style="display: none;">0 Matches</span>
-                    </div>
-                    <div id="careerList">
-                        <div class="text-center" style="padding: 2rem;">
-                            <i data-lucide="search" width="48" height="48" style="color: var(--color-muted); margin-bottom: 1rem;"></i>
-                            <p class="text-muted">Select your interests and click "Get Suggestions" to start exploring your future.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <aside class="planner-sidebar">
-                <div class="card">
-                    <h3>Saved Careers</h3>
-                    <div id="savedList">
-                        <p class="text-muted text-center">Your favorites will appear here.</p>
-                    </div>
-                </div>
-            </aside>
+        <div class="card">
+            <h2>Your Interests</h2>
+            <div class="chip-container" id="interestsContainer"></div>
+            
+            <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Your Skills</h3>
+            <div class="chip-container" id="skillsContainer"></div>
+            
+            <button type="button" onclick="findCareer()" style="width:100%; padding: 14px; background: linear-gradient(135deg, #b8960c, #7a6200); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 24px;">
+                Find My Career Path
+            </button>
+            
+            <div id="career-result" style="display:none; margin-top:24px;"></div>
         </div>
     `;
 
-    const getBtn = document.getElementById('getSuggestions');
-    const clearBtn = document.getElementById('clearInterests');
-    const careerList = document.getElementById('careerList');
-    const savedList = document.getElementById('savedList');
-    const matchCount = document.getElementById('matchCount');
-    const clearSavedBtn = document.getElementById('clearSavedCareers');
-    const ariaAnnouncer = document.getElementById('ariaAnnouncer');
+    const interests = [
+        "Technology & Computers", "Data Science & AI", "Cybersecurity", "Game Development",
+        "Medicine & Healthcare", "Pharmacy", "Dentistry", "Nursing", "Psychology & Mental Health",
+        "Law & Legal Studies", "Business & Entrepreneurship", "Finance & Banking", "Accounting",
+        "Marketing & Advertising", "Human Resources", "Economics",
+        "Engineering (Mechanical)", "Engineering (Civil)", "Engineering (Electrical)",
+        "Architecture & Design", "Graphic Design", "UI/UX Design", "Fashion Design",
+        "Teaching & Education", "Social Work", "Political Science", "International Relations",
+        "Journalism & Media", "Content Creation & YouTube", "Photography & Film",
+        "Music & Performing Arts", "Writing & Literature", "Animation & VFX",
+        "Environmental Science", "Biotechnology", "Chemistry", "Physics", "Mathematics",
+        "Sports & Fitness", "Hospitality & Tourism", "Culinary Arts", "Aviation",
+        "Research & Academia", "Nonprofit & NGO Work", "Defence & Military"
+    ];
 
-    const announce = (message) => {
-        ariaAnnouncer.textContent = message;
+    const skills = [
+        "Problem Solving", "Creativity", "Communication", "Leadership", "Technical/Coding",
+        "Empathy & Listening", "Attention to Detail", "Physical Stamina", "Artistic Ability",
+        "Research & Analysis", "Teamwork", "Public Speaking", "Writing", "Math & Numbers",
+        "Business Thinking", "Fast Learning"
+    ];
+
+    const careerMap = {
+        "Technology & Computers": {
+            careers: ["Software Developer", "Web Developer", "IT Support Specialist"],
+            matchSkills: ["Technical/Coding", "Problem Solving", "Fast Learning"]
+        },
+        "Data Science & AI": {
+            careers: ["Data Scientist", "ML Engineer", "Data Analyst"],
+            matchSkills: ["Math & Numbers", "Research & Analysis", "Technical/Coding"]
+        },
+        "Cybersecurity": {
+            careers: ["Cybersecurity Analyst", "Ethical Hacker", "Network Security Engineer"],
+            matchSkills: ["Technical/Coding", "Problem Solving", "Attention to Detail"]
+        },
+        "Game Development": {
+            careers: ["Game Developer", "Game Designer", "3D Artist"],
+            matchSkills: ["Technical/Coding", "Creativity", "Artistic Ability"]
+        },
+        "Medicine & Healthcare": {
+            careers: ["Doctor", "Surgeon", "Medical Researcher"],
+            matchSkills: ["Empathy & Listening", "Research & Analysis", "Attention to Detail"]
+        },
+        "Pharmacy": {
+            careers: ["Pharmacist", "Clinical Pharmacologist", "Drug Researcher"],
+            matchSkills: ["Attention to Detail", "Research & Analysis", "Math & Numbers"]
+        },
+        "Dentistry": {
+            careers: ["Dentist", "Orthodontist", "Dental Surgeon"],
+            matchSkills: ["Attention to Detail", "Empathy & Listening", "Physical Stamina"]
+        },
+        "Nursing": {
+            careers: ["Registered Nurse", "ICU Nurse", "Nurse Practitioner"],
+            matchSkills: ["Empathy & Listening", "Physical Stamina", "Attention to Detail"]
+        },
+        "Psychology & Mental Health": {
+            careers: ["Psychologist", "Counsellor", "Therapist"],
+            matchSkills: ["Empathy & Listening", "Communication", "Research & Analysis"]
+        },
+        "Law & Legal Studies": {
+            careers: ["Lawyer", "Judge", "Legal Advisor"],
+            matchSkills: ["Communication", "Research & Analysis", "Public Speaking"]
+        },
+        "Business & Entrepreneurship": {
+            careers: ["Entrepreneur", "Business Analyst", "Startup Founder"],
+            matchSkills: ["Leadership", "Business Thinking", "Communication"]
+        },
+        "Finance & Banking": {
+            careers: ["Financial Analyst", "Investment Banker", "CFO"],
+            matchSkills: ["Math & Numbers", "Business Thinking", "Attention to Detail"]
+        },
+        "Accounting": {
+            careers: ["Chartered Accountant", "Tax Consultant", "Auditor"],
+            matchSkills: ["Math & Numbers", "Attention to Detail", "Business Thinking"]
+        },
+        "Marketing & Advertising": {
+            careers: ["Marketing Manager", "Brand Strategist", "Digital Marketer"],
+            matchSkills: ["Creativity", "Communication", "Business Thinking"]
+        },
+        "Human Resources": {
+            careers: ["HR Manager", "Talent Acquisition Specialist", "L&D Manager"],
+            matchSkills: ["Communication", "Empathy & Listening", "Leadership"]
+        },
+        "Economics": {
+            careers: ["Economist", "Policy Analyst", "Economic Researcher"],
+            matchSkills: ["Research & Analysis", "Math & Numbers", "Problem Solving"]
+        },
+        "Engineering (Mechanical)": {
+            careers: ["Mechanical Engineer", "Automotive Engineer", "Manufacturing Engineer"],
+            matchSkills: ["Problem Solving", "Math & Numbers", "Attention to Detail"]
+        },
+        "Engineering (Civil)": {
+            careers: ["Civil Engineer", "Structural Engineer", "Urban Planner"],
+            matchSkills: ["Problem Solving", "Math & Numbers", "Attention to Detail"]
+        },
+        "Engineering (Electrical)": {
+            careers: ["Electrical Engineer", "Electronics Engineer", "Power Systems Engineer"],
+            matchSkills: ["Technical/Coding", "Math & Numbers", "Problem Solving"]
+        },
+        "Architecture & Design": {
+            careers: ["Architect", "Interior Designer", "Landscape Architect"],
+            matchSkills: ["Creativity", "Artistic Ability", "Attention to Detail"]
+        },
+        "Graphic Design": {
+            careers: ["Graphic Designer", "Visual Designer", "Brand Identity Designer"],
+            matchSkills: ["Creativity", "Artistic Ability", "Attention to Detail"]
+        },
+        "UI/UX Design": {
+            careers: ["UI Designer", "UX Researcher", "Product Designer"],
+            matchSkills: ["Creativity", "Empathy & Listening", "Problem Solving"]
+        },
+        "Fashion Design": {
+            careers: ["Fashion Designer", "Costume Designer", "Textile Designer"],
+            matchSkills: ["Creativity", "Artistic Ability", "Attention to Detail"]
+        },
+        "Teaching & Education": {
+            careers: ["Teacher", "Professor", "Education Consultant"],
+            matchSkills: ["Communication", "Public Speaking", "Empathy & Listening"]
+        },
+        "Social Work": {
+            careers: ["Social Worker", "Community Outreach Officer", "NGO Field Worker"],
+            matchSkills: ["Empathy & Listening", "Communication", "Leadership"]
+        },
+        "Political Science": {
+            careers: ["Political Analyst", "Policy Maker", "Diplomat"],
+            matchSkills: ["Communication", "Research & Analysis", "Public Speaking"]
+        },
+        "International Relations": {
+            careers: ["Diplomat", "Foreign Affairs Officer", "International Consultant"],
+            matchSkills: ["Communication", "Research & Analysis", "Public Speaking"]
+        },
+        "Journalism & Media": {
+            careers: ["Journalist", "News Anchor", "Media Producer"],
+            matchSkills: ["Communication", "Writing", "Research & Analysis"]
+        },
+        "Content Creation & YouTube": {
+            careers: ["YouTuber", "Content Strategist", "Social Media Manager"],
+            matchSkills: ["Creativity", "Communication", "Fast Learning"]
+        },
+        "Photography & Film": {
+            careers: ["Photographer", "Filmmaker", "Cinematographer"],
+            matchSkills: ["Creativity", "Artistic Ability", "Attention to Detail"]
+        },
+        "Music & Performing Arts": {
+            careers: ["Musician", "Music Producer", "Performing Artist"],
+            matchSkills: ["Creativity", "Artistic Ability", "Public Speaking"]
+        },
+        "Writing & Literature": {
+            careers: ["Author", "Copywriter", "Content Writer"],
+            matchSkills: ["Writing", "Creativity", "Research & Analysis"]
+        },
+        "Animation & VFX": {
+            careers: ["Animator", "VFX Artist", "Motion Graphics Designer"],
+            matchSkills: ["Creativity", "Artistic Ability", "Technical/Coding"]
+        },
+        "Environmental Science": {
+            careers: ["Environmental Scientist", "Climate Analyst", "Conservation Officer"],
+            matchSkills: ["Research & Analysis", "Problem Solving", "Attention to Detail"]
+        },
+        "Biotechnology": {
+            careers: ["Biotechnologist", "Genetic Engineer", "Biomedical Researcher"],
+            matchSkills: ["Research & Analysis", "Attention to Detail", "Problem Solving"]
+        },
+        "Chemistry": {
+            careers: ["Chemist", "Chemical Engineer", "Lab Researcher"],
+            matchSkills: ["Research & Analysis", "Attention to Detail", "Math & Numbers"]
+        },
+        "Physics": {
+            careers: ["Physicist", "Research Scientist", "Astrophysicist"],
+            matchSkills: ["Math & Numbers", "Research & Analysis", "Problem Solving"]
+        },
+        "Mathematics": {
+            careers: ["Mathematician", "Statistician", "Actuary"],
+            matchSkills: ["Math & Numbers", "Problem Solving", "Research & Analysis"]
+        },
+        "Sports & Fitness": {
+            careers: ["Professional Athlete", "Sports Coach", "Fitness Trainer"],
+            matchSkills: ["Physical Stamina", "Leadership", "Teamwork"]
+        },
+        "Hospitality & Tourism": {
+            careers: ["Hotel Manager", "Travel Consultant", "Event Planner"],
+            matchSkills: ["Communication", "Teamwork", "Empathy & Listening"]
+        },
+        "Culinary Arts": {
+            careers: ["Chef", "Restaurant Owner", "Food Stylist"],
+            matchSkills: ["Creativity", "Attention to Detail", "Physical Stamina"]
+        },
+        "Aviation": {
+            careers: ["Pilot", "Air Traffic Controller", "Aviation Engineer"],
+            matchSkills: ["Attention to Detail", "Problem Solving", "Fast Learning"]
+        },
+        "Research & Academia": {
+            careers: ["Research Scientist", "University Professor", "Academic Writer"],
+            matchSkills: ["Research & Analysis", "Writing", "Problem Solving"]
+        },
+        "Nonprofit & NGO Work": {
+            careers: ["NGO Manager", "Fundraising Officer", "Social Impact Consultant"],
+            matchSkills: ["Communication", "Leadership", "Empathy & Listening"]
+        },
+        "Defence & Military": {
+            careers: ["Military Officer", "Defence Analyst", "Intelligence Officer"],
+            matchSkills: ["Leadership", "Physical Stamina", "Problem Solving"]
+        }
     };
 
-    const loadCareerState = () => {
-        const savedInterests = JSON.parse(localStorage.getItem('sl_career_interests') || '[]');
-        document.querySelectorAll('.interest-checkbox').forEach(cb => {
-            if (savedInterests.includes(cb.value)) cb.checked = true;
+    let selectedInterests = [];
+    let selectedSkills = [];
+
+    // Render interest chips
+    const interestsContainer = document.getElementById('interestsContainer');
+    interests.forEach(interest => {
+        const chip = document.createElement('div');
+        chip.className = 'chip';
+        chip.textContent = interest;
+        chip.onclick = () => {
+            chip.classList.toggle('selected');
+            if (chip.classList.contains('selected')) {
+                selectedInterests.push(interest);
+            } else {
+                selectedInterests = selectedInterests.filter(i => i !== interest);
+            }
+        };
+        interestsContainer.appendChild(chip);
+    });
+
+    // Render skill chips
+    const skillsContainer = document.getElementById('skillsContainer');
+    skills.forEach(skill => {
+        const chip = document.createElement('div');
+        chip.className = 'chip';
+        chip.textContent = skill;
+        chip.onclick = () => {
+            chip.classList.toggle('selected');
+            if (chip.classList.contains('selected')) {
+                selectedSkills.push(skill);
+            } else {
+                selectedSkills = selectedSkills.filter(s => s !== skill);
+            }
+        };
+        skillsContainer.appendChild(chip);
+    });
+
+    // Global functions
+    window.findCareer = function() {
+        if (selectedInterests.length === 0) {
+            alert("Please select at least one interest.");
+            return;
+        }
+        if (selectedSkills.length === 0) {
+            alert("Please select at least one skill.");
+            return;
+        }
+
+        const results = [];
+
+        selectedInterests.forEach(interest => {
+            const entry = careerMap[interest];
+            if (!entry) return;
+
+            const skillMatch = entry.matchSkills.filter(s => selectedSkills.includes(s)).length;
+            const score = skillMatch * 2 + 1;
+
+            entry.careers.forEach(career => {
+                results.push({ career, interest, score, skillMatch });
+            });
         });
 
-        renderSavedCareers();
-        if (savedInterests.length > 0) {
-            generateSuggestions();
-        }
+        results.sort((a, b) => b.score - a.score);
+        const top = results.slice(0, 5);
+        showCareerResults(top);
     };
 
-    const saveCareerState = () => {
-        const selected = Array.from(document.querySelectorAll('.interest-checkbox:checked')).map(cb => cb.value);
-        localStorage.setItem('sl_career_interests', JSON.stringify(selected));
-    };
+    window.showCareerResults = function(results) {
+        const div = document.getElementById("career-result");
+        div.style.display = "block";
+        div.scrollIntoView({ behavior: "smooth" });
 
-    const renderSavedCareers = () => {
-        const saved = JSON.parse(localStorage.getItem('sl_saved_careers') || '[]');
-        if (saved.length === 0) {
-            savedList.innerHTML = '<p class="text-secondary small">Your favorites will appear here.</p>';
-            return;
-        }
-
-        savedList.innerHTML = saved.map(careerTitle => `
-            <div class="saved-item">
-                <span>${careerTitle}</span>
-                <button class="remove-btn" onclick="toggleSaveCareer('${careerTitle}')">Ã—</button>
-            </div>
-        `).join('');
-    };
-
-    window.toggleSaveCareer = (title) => {
-        let saved = JSON.parse(localStorage.getItem('sl_saved_careers') || '[]');
-        if (saved.includes(title)) {
-            saved = saved.filter(t => t !== title);
-            announce(`Removed ${title} from favorites.`);
-        } else {
-            saved.push(title);
-            announce(`Saved ${title} to favorites.`);
-        }
-        localStorage.setItem('sl_saved_careers', JSON.stringify(saved));
-        renderSavedCareers();
-        
-        // Re-render suggestions to update button state if visible
-        const selected = Array.from(document.querySelectorAll('.interest-checkbox:checked')).map(cb => cb.value);
-        if (selected.length > 0) generateSuggestions();
-    };
-
-    const generateSuggestions = () => {
-        const selected = Array.from(document.querySelectorAll('.interest-checkbox:checked')).map(cb => cb.value);
-        
-        if (selected.length === 0) {
-            careerList.innerHTML = `
-                <div class="empty-state">
-                    <p>Select your interests and click "Get Suggestions" to start exploring your future.</p>
+        div.innerHTML = `
+            <h3 style="font-size:20px; font-weight:700; margin-bottom:16px; color:#3d3000;">
+                Your Top Career Matches
+            </h3>
+            ${results.map((r, i) => `
+                <div style="border: 2px solid ${i === 0 ? '#b8960c' : '#e0c97f'}; border-radius:12px; padding:16px; margin-bottom:12px; background: ${i === 0 ? '#fffbe6' : 'white'};">
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                        <span style="background:#b8960c; color:white; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;">${i + 1}</span>
+                        <span style="font-size:17px; font-weight:700; color:#3d3000;">${r.career}</span>
+                        ${i === 0 ? '<span style="background:#b8960c; color:white; font-size:11px; padding:2px 10px; border-radius:20px; margin-left:auto;">Best Match</span>' : ''}
+                    </div>
+                    <p style="font-size:13px; color:#666; margin:0;">Based on your interest in <strong>${r.interest}</strong> · ${r.skillMatch} skill${r.skillMatch !== 1 ? 's' : ''} matched</p>
                 </div>
-            `;
-            matchCount.classList.add('hidden');
-            return;
-        }
-
-        if (selected.length > 6) {
-            announce("You've selected many interests. Try narrowing them down for more specific results.");
-        }
-
-        const saved = JSON.parse(localStorage.getItem('sl_saved_careers') || '[]');
-
-        // Logic: Rank by how many interests match
-        let scoredCareers = CAREER_DATA.map(career => {
-            const matches = career.interests.filter(i => selected.includes(i));
-            const score = matches.length;
-            return { ...career, score, matchedInterests: matches };
-        }).filter(c => c.score > 0);
-
-        scoredCareers.sort((a, b) => b.score - a.score);
-
-        if (scoredCareers.length === 0) {
-            careerList.innerHTML = `
-                <div class="empty-state">
-                    <p>No exact matches found. Try selecting different interests or broader categories.</p>
-                </div>
-            `;
-            matchCount.classList.add('hidden');
-            return;
-        }
-
-        matchCount.textContent = `${scoredCareers.length} Matches`;
-        matchCount.classList.remove('hidden');
-
-        careerList.innerHTML = scoredCareers.map(career => {
-            const isSaved = saved.includes(career.title);
-            const relevanceClass = career.score >= 2 ? 'high' : (career.score === 1 ? 'medium' : 'low');
-            const relevanceText = career.score >= 2 ? 'High Match' : 'Match';
-
-            return `
-                <div class="career-card glow-card reveal-on-scroll" style="animation-delay: ${0.04 * scoredCareers.indexOf(career)}s">
-                    <div class="career-card-header">
-                        <div class="title-section">
-                            <h4>${career.title}</h4>
-                            <span class="badge ${relevanceClass}">${relevanceText}</span>
-                        </div>
-                        <button class="save-btn ${isSaved ? 'active' : ''}" data-title="${career.title}" onclick="toggleSaveCareer('${career.title}')">
-                            ${isSaved ? 'â˜… Saved' : 'â˜† Save'}
-                        </button>
-                    </div>
-                    
-                    <p class="career-desc">${career.description}</p>
-                    
-                    <div class="career-tags">
-                        ${career.matchedInterests.map(tag => `<span class="tag">${tag}</span>`).join('')}
-                    </div>
-
-                    <div class="career-details">
-                        <div class="detail-section">
-                            <strong>Skills:</strong> ${career.skills.join(', ')}
-                        </div>
-                        <div class="detail-section">
-                            <strong>Growth:</strong> ${career.growth}
-                        </div>
-                        <div class="detail-section">
-                            <strong>Education:</strong> ${career.education}
-                        </div>
-                        <div class="detail-section next-steps">
-                            <strong>Next Steps:</strong>
-                            <ul>
-                                ${career.nextSteps.map(step => `<li>${step}</li>`).join('')}
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="why-suits">
-                        <small><em>Why this suits you:</em> Matches your interest in ${career.matchedInterests.join(' and ')}.</small>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        announce(`Found ${scoredCareers.length} career suggestions.`);
+            `).join("")}
+            <button type="button" onclick="resetCareer()" style="width:100%; padding:12px; background:white; border:2px solid #b8960c; color:#b8960c; border-radius:12px; font-size:14px; font-weight:600; cursor:pointer; margin-top:8px;">
+                Start Over
+            </button>
+        `;
     };
 
-    getBtn.addEventListener('click', () => {
-        saveCareerState();
-        generateSuggestions();
-    });
-
-    clearBtn.addEventListener('click', () => {
-        document.querySelectorAll('.interest-checkbox').forEach(cb => cb.checked = false);
-        localStorage.removeItem('sl_career_interests');
-        generateSuggestions();
-        announce("Interests cleared.");
-    });
-
-    clearSavedBtn.addEventListener('click', () => {
-        if (confirm('Clear all saved careers?')) {
-            localStorage.setItem('sl_saved_careers', '[]');
-            renderSavedCareers();
-            generateSuggestions();
-            announce("Saved careers cleared.");
-        }
-    });
-
-    loadCareerState();
+    window.resetCareer = function() {
+        selectedInterests = [];
+        selectedSkills = [];
+        document.querySelectorAll(".chip").forEach(c => c.classList.remove("selected"));
+        const div = document.getElementById("career-result");
+        div.style.display = "none";
+        div.innerHTML = "";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
 }
 
 /* -------------------------------------------------------------------------- */
