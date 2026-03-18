@@ -63,13 +63,11 @@
             lucide.createIcons();
         }
     </script>
-    <script type="module">
-import { HumeClient } from "https://esm.sh/hume@0.7.5";
-
+    <script>
 const HUME_API_KEY = "39QXmlAZK5oA3IiB98FRvGj66nwAJBMNoEo3QQue4vhMXjzx";
 const HUME_CONFIG_ID = "45141556-c90a-41bc-a780-42c7a74ae8c3";
 
-let socket = null;
+let ws = null;
 let isConnecting = false;
 
 function appendBubble(text, sender) {
@@ -87,62 +85,69 @@ function showTyping(show) {
   if (t) t.style.display = show ? "block" : "none";
 }
 
-async function initHume() {
-  if (socket || isConnecting) return;
+function connectHume() {
+  if (ws || isConnecting) return;
   isConnecting = true;
 
-  try {
-    const client = new HumeClient({ apiKey: HUME_API_KEY });
+  const url = `wss://api.hume.ai/v0/evi/chat?api_key=${HUME_API_KEY}&config_id=${HUME_CONFIG_ID}`;
+  ws = new WebSocket(url);
 
-    socket = await client.empathicVoice.chat.connect({
-      configId: HUME_CONFIG_ID,
-      onMessage: (message) => {
-        if (message.type === "assistant_message") {
-          const text = message.message?.content;
-          if (!text) return;
+  ws.onopen = () => {
+    console.log("Hume connected");
+    isConnecting = false;
+  };
 
-          showTyping(false);
-          appendBubble(text, "ai");
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
 
-          const emotions = message.models?.prosody?.scores;
-          if (emotions) {
-            const top = Object.entries(emotions).sort((a, b) => b[1] - a[1])[0];
-            if (top) {
-              const bar = document.getElementById("emotion-bar");
-              const label = document.getElementById("emotion-label");
-              if (bar && label) {
-                bar.style.display = "block";
-                label.textContent = top[0].charAt(0).toUpperCase() + top[0].slice(1);
-              }
+      if (data.type === "assistant_message") {
+        const text = data.message?.content;
+        if (!text) return;
+        showTyping(false);
+        appendBubble(text, "ai");
+
+        const emotions = data.models?.prosody?.scores;
+        if (emotions) {
+          const top = Object.entries(emotions).sort((a, b) => b[1] - a[1])[0];
+          if (top) {
+            const bar = document.getElementById("emotion-bar");
+            const label = document.getElementById("emotion-label");
+            if (bar && label) {
+              bar.style.display = "block";
+              label.textContent = top[0].charAt(0).toUpperCase() + top[0].slice(1);
             }
           }
         }
-      },
-      onError: (err) => {
-        console.error("Hume error:", err);
-        showTyping(false);
-        appendBubble("I lost connection for a sec! Try again? 😅", "ai");
-        socket = null;
-        isConnecting = false;
-      },
-      onClose: () => {
-        socket = null;
-        isConnecting = false;
       }
-    });
 
-    isConnecting = false;
-    console.log("Hume connected successfully");
+      if (data.type === "error") {
+        console.error("Hume error:", data);
+        showTyping(false);
+        appendBubble("Something went wrong. Try again! 😅", "ai");
+      }
 
-  } catch (err) {
-    console.error("Hume init failed:", err);
+    } catch (err) {
+      console.error("Parse error:", err);
+    }
+  };
+
+  ws.onerror = (err) => {
+    console.error("WebSocket error:", err);
     isConnecting = false;
-    socket = null;
-    appendBubble("Couldn't connect right now. Please refresh and try again! 😅", "ai");
-  }
+    ws = null;
+    showTyping(false);
+    appendBubble("Couldn't connect. Please refresh and try again! 😅", "ai");
+  };
+
+  ws.onclose = () => {
+    console.log("Hume disconnected");
+    ws = null;
+    isConnecting = false;
+  };
 }
 
-async function sendHumeMessage() {
+function sendHumeMessage() {
   const input = document.getElementById("chat-input");
   if (!input) return;
   const message = input.value.trim();
@@ -152,38 +157,46 @@ async function sendHumeMessage() {
   appendBubble(message, "user");
   showTyping(true);
 
-  if (!socket) {
-    await initHume();
-  }
-
-  if (socket) {
-    try {
-      socket.sendUserInput(message);
-    } catch (err) {
-      console.error("Send error:", err);
-      showTyping(false);
-      appendBubble("Something went wrong sending that. Try again! 😅", "ai");
-      socket = null;
-    }
-  }
-}
-
-if (new URLSearchParams(window.location.search).get("tool") === "clutchai") {
-  const sendBtn = document.getElementById("send-btn");
-  const chatInput = document.getElementById("chat-input");
-
-  if (sendBtn) sendBtn.addEventListener("click", sendHumeMessage);
-  if (chatInput) {
-    chatInput.addEventListener("keydown", function(e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        sendHumeMessage();
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    connectHume();
+    setTimeout(() => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: "user_input",
+          text: message
+        }));
+      } else {
+        showTyping(false);
+        appendBubble("Still connecting... please try again in a moment! 😅", "ai");
       }
-    });
+    }, 2000);
+    return;
   }
 
-  initHume();
+  ws.send(JSON.stringify({
+    type: "user_input",
+    text: message
+  }));
 }
+
+document.addEventListener("DOMContentLoaded", function() {
+  if (new URLSearchParams(window.location.search).get("tool") === "clutchai") {
+    const sendBtn = document.getElementById("send-btn");
+    const chatInput = document.getElementById("chat-input");
+
+    if (sendBtn) sendBtn.addEventListener("click", sendHumeMessage);
+    if (chatInput) {
+      chatInput.addEventListener("keydown", function(e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          sendHumeMessage();
+        }
+      });
+    }
+
+    connectHume();
+  }
+});
 </script>
 </body>
 </html>
