@@ -69,6 +69,9 @@ const HUME_CONFIG_ID = "45141556-c90a-41bc-a780-42c7a74ae8c3";
 
 let ws = null;
 let isConnecting = false;
+let isAITyping = false;
+let userHasSpoken = false;
+let waitingForUser = false;
 
 function appendBubble(text, sender) {
   const box = document.getElementById("chat-messages");
@@ -104,21 +107,20 @@ function connectHume() {
       if (data.type === "assistant_message") {
         const text = data.message?.content;
         if (!text) return;
+        
+        if (isAITyping) return;
+        isAITyping = true;
+
+        if (!userHasSpoken) return;
+        if (waitingForUser) return;
+
         showTyping(false);
         appendBubble(text, "ai");
+        waitingForUser = true;
 
-        const emotions = data.models?.prosody?.scores;
-        if (emotions) {
-          const top = Object.entries(emotions).sort((a, b) => b[1] - a[1])[0];
-          if (top) {
-            const bar = document.getElementById("emotion-bar");
-            const label = document.getElementById("emotion-label");
-            if (bar && label) {
-              bar.style.display = "block";
-              label.textContent = top[0].charAt(0).toUpperCase() + top[0].slice(1);
-            }
-          }
-        }
+        setTimeout(() => {
+          isAITyping = false;
+        }, 500);
       }
 
       if (data.type === "error") {
@@ -156,6 +158,9 @@ function sendHumeMessage() {
   input.value = "";
   appendBubble(message, "user");
   showTyping(true);
+
+  waitingForUser = false;
+  userHasSpoken = true;
 
   if (!ws || ws.readyState !== WebSocket.OPEN) {
     connectHume();
