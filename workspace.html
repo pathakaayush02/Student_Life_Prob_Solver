@@ -117,10 +117,6 @@ function connectHume() {
         showTyping(false);
         appendBubble(text, "ai");
         waitingForUser = true;
-
-        setTimeout(() => {
-          isAITyping = false;
-        }, 500);
       }
 
       if (data.type === "error") {
@@ -159,8 +155,8 @@ function sendHumeMessage() {
   appendBubble(message, "user");
   showTyping(true);
 
-  waitingForUser = false;
   userHasSpoken = true;
+  waitingForUser = false;
 
   if (!ws || ws.readyState !== WebSocket.OPEN) {
     connectHume();
