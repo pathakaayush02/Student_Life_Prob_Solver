@@ -1973,17 +1973,13 @@ function renderClutchAI(container) {
 
           <div style="text-align:center; margin-bottom:28px;">
             <h2 style="font-size:24px; font-weight:700; color:#3d3000;">CLUTCH AI</h2>
-            <p style="color:#888; font-size:14px;">Your empathic mood companion. It understands how you feel.</p>
+            <p style="color:#888; font-size:14px;">Your warm and friendly emotional support companion. Here to listen and uplift your mood.</p>
           </div>
 
           <div id="chat-messages" style="height:400px; overflow-y:auto; border:1px solid #e8d88a; border-radius:16px; padding:16px; background:#fffdf0; margin-bottom:16px; display:flex; flex-direction:column; gap:12px;">
             <div class="ai-bubble">
-              Hey! 👋 I'm CLUTCH AI. I'm here to listen — no judgement, just support. What's going on?
+              Hey! 👋 I'm CLUTCH AI. I'm here to listen — no judgement, just support. What's on your mind?
             </div>
-          </div>
-
-          <div id="emotion-bar" style="display:none; background:#fffbe6; border:1px solid #e8d88a; border-radius:10px; padding:10px 14px; margin-bottom:12px; font-size:13px; color:#7a6200;">
-            <strong>Detected mood:</strong> <span id="emotion-label">—</span>
           </div>
 
           <div id="typing-indicator" style="display:none; padding:6px 0; font-size:13px; color:#999; margin-bottom:8px;">
@@ -2002,7 +1998,7 @@ function renderClutchAI(container) {
             </button>
           </div>
 
-          <p style="text-align:center; font-size:12px; color:#bbb; margin-top:16px;">Powered by Hume EVI · Emotionally intelligent AI</p>
+          <p style="text-align:center; font-size:12px; color:#bbb; margin-top:16px;">Powered by CLUTCH AI · Here to listen</p>
 
         </div>
     `;

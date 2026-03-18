@@ -64,14 +64,10 @@
         }
     </script>
     <script>
-const HUME_API_KEY = "39QXmlAZK5oA3IiB98FRvGj66nwAJBMNoEo3QQue4vhMXjzx";
-const HUME_CONFIG_ID = "45141556-c90a-41bc-a780-42c7a74ae8c3";
+const GROQ_API_KEY = "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";
 
-let ws = null;
-let userHasSpoken = false;
-let waitingForUser = false;
-let reconnectAttempts = 0;
-const MAX_RECONNECTS = 3;
+let conversationHistory = [];
+let isWaiting = false;
 
 function appendBubble(text, sender) {
   const box = document.getElementById("chat-messages");
@@ -88,71 +84,8 @@ function showTyping(show) {
   if (t) t.style.display = show ? "block" : "none";
 }
 
-function connectHume(onReady) {
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    if (onReady) onReady();
-    return;
-  }
-
-  const url = `wss://api.hume.ai/v0/evi/chat?api_key=${HUME_API_KEY}&config_id=${HUME_CONFIG_ID}`;
-  ws = new WebSocket(url);
-
-  ws.onopen = () => {
-    console.log("Hume connected");
-    reconnectAttempts = 0;
-    if (onReady) onReady();
-  };
-
-  ws.onmessage = (event) => {
-    try {
-      const data = JSON.parse(event.data);
-      console.log("Hume message type:", data.type);
-
-      if (data.type === "assistant_message") {
-        const text = data.message?.content;
-        if (!text) return;
-        if (!userHasSpoken) return;
-        if (waitingForUser) return;
-
-        showTyping(false);
-        appendBubble(text, "ai");
-        waitingForUser = true;
-      }
-
-      if (data.type === "error") {
-        console.error("Hume server error:", data);
-        showTyping(false);
-        appendBubble("Hmm, something went wrong on my end. Try sending again! 😅", "ai");
-        waitingForUser = true;
-      }
-
-    } catch (err) {
-      console.error("Parse error:", err);
-    }
-  };
-
-  ws.onerror = (err) => {
-    console.error("WebSocket error:", err);
-    ws = null;
-  };
-
-  ws.onclose = (event) => {
-    console.log("Hume closed, code:", event.code, "reason:", event.reason);
-    ws = null;
-
-    if (event.code === 1008) {
-      appendBubble("Connection failed — please check your API key is valid.", "ai");
-      return;
-    }
-
-    if (event.code === 1011) {
-      appendBubble("Hume server error. Please try refreshing the page.", "ai");
-      return;
-    }
-  };
-}
-
-function sendHumeMessage() {
+async function sendHumeMessage() {
+  if (isWaiting) return;
   const input = document.getElementById("chat-input");
   if (!input) return;
   const message = input.value.trim();
@@ -161,30 +94,55 @@ function sendHumeMessage() {
   input.value = "";
   appendBubble(message, "user");
   showTyping(true);
-  userHasSpoken = true;
-  waitingForUser = false;
+  isWaiting = true;
 
-  if (!ws || ws.readyState !== WebSocket.OPEN) {
-    connectHume(() => {
-      setTimeout(() => {
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({
-            type: "user_input",
-            text: message
-          }));
-        } else {
-          showTyping(false);
-          appendBubble("Couldn't connect. Please refresh and try again! 😅", "ai");
-        }
-      }, 1500);
+  conversationHistory.push({
+    role: "user",
+    content: message
+  });
+
+  try {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${GROQ_API_KEY}` 
+      },
+      body: JSON.stringify({
+        model: "llama3-8b-8192",
+        max_tokens: 150,
+        messages: [
+          {
+            role: "system",
+            content: "You are CLUTCH AI, a warm and friendly emotional support companion for students. Your only job is to listen, understand, and uplifts a student's mood. Never give academic advice unless specifically asked. Be empathetic, casual and encouraging. Keep every response short — 2 to 3 sentences maximum. Ask only ONE question at a time then stop. Never send multiple thoughts in one message. Use friendly conversational language. Occasionally use light humor to ease tension. Never give medical advice. If a student seems seriously distressed, gently encourage them to talk to someone they trust in real life."
+          },
+          ...conversationHistory
+        ]
+      })
     });
-    return;
-  }
 
-  ws.send(JSON.stringify({
-    type: "user_input",
-    text: message
-  }));
+    const data = await response.json();
+
+    if (data.choices && data.choices[0]) {
+      const reply = data.choices[0].message.content;
+      conversationHistory.push({
+        role: "assistant",
+        content: reply
+      });
+      showTyping(false);
+      appendBubble(reply, "ai");
+    } else {
+      throw new Error("No response from Groq");
+    }
+
+  } catch (err) {
+    console.error("Groq error:", err);
+    showTyping(false);
+    appendBubble("Oops, I zoned out for a sec! Try again? 😅", "ai");
+    conversationHistory.pop();
+  } finally {
+    isWaiting = false;
+  }
 }
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -201,8 +159,6 @@ document.addEventListener("DOMContentLoaded", function() {
         }
       });
     }
-
-    connectHume();
   }
 });
 </script>
