@@ -68,10 +68,10 @@ const HUME_API_KEY = "39QXmlAZK5oA3IiB98FRvGj66nwAJBMNoEo3QQue4vhMXjzx";
 const HUME_CONFIG_ID = "45141556-c90a-41bc-a780-42c7a74ae8c3";
 
 let ws = null;
-let isConnecting = false;
-let isAITyping = false;
 let userHasSpoken = false;
 let waitingForUser = false;
+let reconnectAttempts = 0;
+const MAX_RECONNECTS = 3;
 
 function appendBubble(text, sender) {
   const box = document.getElementById("chat-messages");
@@ -88,29 +88,29 @@ function showTyping(show) {
   if (t) t.style.display = show ? "block" : "none";
 }
 
-function connectHume() {
-  if (ws || isConnecting) return;
-  isConnecting = true;
+function connectHume(onReady) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    if (onReady) onReady();
+    return;
+  }
 
   const url = `wss://api.hume.ai/v0/evi/chat?api_key=${HUME_API_KEY}&config_id=${HUME_CONFIG_ID}`;
   ws = new WebSocket(url);
 
   ws.onopen = () => {
     console.log("Hume connected");
-    isConnecting = false;
+    reconnectAttempts = 0;
+    if (onReady) onReady();
   };
 
   ws.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data);
+      console.log("Hume message type:", data.type);
 
       if (data.type === "assistant_message") {
         const text = data.message?.content;
         if (!text) return;
-        
-        if (isAITyping) return;
-        isAITyping = true;
-
         if (!userHasSpoken) return;
         if (waitingForUser) return;
 
@@ -120,9 +120,10 @@ function connectHume() {
       }
 
       if (data.type === "error") {
-        console.error("Hume error:", data);
+        console.error("Hume server error:", data);
         showTyping(false);
-        appendBubble("Something went wrong. Try again! 😅", "ai");
+        appendBubble("Hmm, something went wrong on my end. Try sending again! 😅", "ai");
+        waitingForUser = true;
       }
 
     } catch (err) {
@@ -132,16 +133,22 @@ function connectHume() {
 
   ws.onerror = (err) => {
     console.error("WebSocket error:", err);
-    isConnecting = false;
     ws = null;
-    showTyping(false);
-    appendBubble("Couldn't connect. Please refresh and try again! 😅", "ai");
   };
 
-  ws.onclose = () => {
-    console.log("Hume disconnected");
+  ws.onclose = (event) => {
+    console.log("Hume closed, code:", event.code, "reason:", event.reason);
     ws = null;
-    isConnecting = false;
+
+    if (event.code === 1008) {
+      appendBubble("Connection failed — please check your API key is valid.", "ai");
+      return;
+    }
+
+    if (event.code === 1011) {
+      appendBubble("Hume server error. Please try refreshing the page.", "ai");
+      return;
+    }
   };
 }
 
@@ -154,23 +161,23 @@ function sendHumeMessage() {
   input.value = "";
   appendBubble(message, "user");
   showTyping(true);
-
   userHasSpoken = true;
   waitingForUser = false;
 
   if (!ws || ws.readyState !== WebSocket.OPEN) {
-    connectHume();
-    setTimeout(() => {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({
-          type: "user_input",
-          text: message
-        }));
-      } else {
-        showTyping(false);
-        appendBubble("Still connecting... please try again in a moment! 😅", "ai");
-      }
-    }, 2000);
+    connectHume(() => {
+      setTimeout(() => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: "user_input",
+            text: message
+          }));
+        } else {
+          showTyping(false);
+          appendBubble("Couldn't connect. Please refresh and try again! 😅", "ai");
+        }
+      }, 1500);
+    });
     return;
   }
 
