@@ -251,6 +251,10 @@ function initWorkspace() {
             breadcrumb.textContent = 'Focus Timer';
             renderPomodoroTimer(workspace);
             break;
+        case 'clutchai':
+            breadcrumb.textContent = 'CLUTCH AI';
+            renderClutchAI(workspace);
+            break;
         default:
             // Error handling for invalid tool parameter
             workspace.innerHTML = '<div class="glass-panel text-center"><h1>Tool Not Found</h1><p>The tool you are looking for does not exist.</p></div>';
@@ -1961,6 +1965,47 @@ function renderPomodoroTimer(container) {
     loadStats();
     updateDisplay();
     updatePhaseLabel();
+}
+
+function renderClutchAI(container) {
+    container.innerHTML = `
+        <div id="tool-clutchai" class="tool-section" style="max-width:600px; margin:0 auto;">
+
+          <div style="text-align:center; margin-bottom:28px;">
+            <h2 style="font-size:24px; font-weight:700; color:#3d3000;">CLUTCH AI</h2>
+            <p style="color:#888; font-size:14px;">Your empathic mood companion. It understands how you feel.</p>
+          </div>
+
+          <div id="chat-messages" style="height:400px; overflow-y:auto; border:1px solid #e8d88a; border-radius:16px; padding:16px; background:#fffdf0; margin-bottom:16px; display:flex; flex-direction:column; gap:12px;">
+            <div class="ai-bubble">
+              Hey! 👋 I'm CLUTCH AI. I'm here to listen — no judgement, just support. What's going on?
+            </div>
+          </div>
+
+          <div id="emotion-bar" style="display:none; background:#fffbe6; border:1px solid #e8d88a; border-radius:10px; padding:10px 14px; margin-bottom:12px; font-size:13px; color:#7a6200;">
+            <strong>Detected mood:</strong> <span id="emotion-label">—</span>
+          </div>
+
+          <div id="typing-indicator" style="display:none; padding:6px 0; font-size:13px; color:#999; margin-bottom:8px;">
+            CLUTCH AI is thinking...
+          </div>
+
+          <div style="display:flex; gap:10px; align-items:center;">
+            <input
+              type="text"
+              id="chat-input"
+              placeholder="Type how you feel..."
+              style="flex:1; padding:12px 16px; border:2px solid #b8960c; border-radius:12px; font-size:14px; outline:none;"
+            />
+            <button type="button" id="send-btn" style="padding:12px 20px; background:linear-gradient(135deg,#b8960c,#7a6200); color:white; border:none; border-radius:12px; font-size:14px; font-weight:600; cursor:pointer;">
+              Send
+            </button>
+          </div>
+
+          <p style="text-align:center; font-size:12px; color:#bbb; margin-top:16px;">Powered by Hume EVI · Emotionally intelligent AI</p>
+
+        </div>
+    `;
 }
 
 // Initialize Lucide icons when DOM is ready
