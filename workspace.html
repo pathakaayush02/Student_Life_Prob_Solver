@@ -101,30 +101,42 @@ async function sendHumeMessage() {
     content: message
   });
 
+  const requestBody = {
+    model: "llama3-8b-8192",
+    messages: [
+      {
+        role: "system",
+        content: "You are CLUTCH AI, a warm and friendly emotional support companion for students. Listen and uplift their mood. Keep responses to 2-3 sentences max. Ask only one question at a time."
+      },
+      ...conversationHistory
+    ],
+    max_tokens: 150,
+    temperature: 0.7
+  };
+
+  console.log("Using Groq key starting with:", GROQ_API_KEY.substring(0, 8));
+
   try {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${GROQ_API_KEY}` 
+        "Authorization": "Bearer " + GROQ_API_KEY
       },
-      body: JSON.stringify({
-        model: "llama3-8b-8192",
-        max_tokens: 150,
-        messages: [
-          {
-            role: "system",
-            content: "You are CLUTCH AI, a warm and friendly emotional support companion for students. Your only job is to listen, understand, and uplifts a student's mood. Never give academic advice unless specifically asked. Be empathetic, casual and encouraging. Keep every response short — 2 to 3 sentences maximum. Ask only ONE question at a time then stop. Never send multiple thoughts in one message. Use friendly conversational language. Occasionally use light humor to ease tension. Never give medical advice. If a student seems seriously distressed, gently encourage them to talk to someone they trust in real life."
-          },
-          ...conversationHistory
-        ]
-      })
+      body: JSON.stringify(requestBody)
     });
 
-    const data = await response.json();
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Groq HTTP error:", response.status, errorText);
+      throw new Error("HTTP " + response.status);
+    }
 
-    if (data.choices && data.choices[0]) {
-      const reply = data.choices[0].message.content;
+    const data = await response.json();
+    console.log("Groq response:", data);
+
+    if (data.choices && data.choices.length > 0) {
+      const reply = data.choices[0].message.content.trim();
       conversationHistory.push({
         role: "assistant",
         content: reply
@@ -132,14 +144,16 @@ async function sendHumeMessage() {
       showTyping(false);
       appendBubble(reply, "ai");
     } else {
-      throw new Error("No response from Groq");
+      throw new Error("No choices in response");
     }
 
   } catch (err) {
     console.error("Groq error:", err);
     showTyping(false);
     appendBubble("Oops, I zoned out for a sec! Try again? 😅", "ai");
-    conversationHistory.pop();
+    if (conversationHistory[conversationHistory.length - 1]?.role === "user") {
+      conversationHistory.pop();
+    }
   } finally {
     isWaiting = false;
   }

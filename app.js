@@ -1973,7 +1973,7 @@ function renderClutchAI(container) {
 
           <div style="text-align:center; margin-bottom:28px;">
             <h2 style="font-size:24px; font-weight:700; color:#3d3000;">CLUTCH AI</h2>
-            <p style="color:#888; font-size:14px;">Your warm and friendly emotional support companion. Here to listen and uplift your mood.</p>
+            <p style="color:#888; font-size:14px;">Your friendly emotional support companion. I'm here to listen and help you feel better.</p>
           </div>
 
           <div id="chat-messages" style="height:400px; overflow-y:auto; border:1px solid #e8d88a; border-radius:16px; padding:16px; background:#fffdf0; margin-bottom:16px; display:flex; flex-direction:column; gap:12px;">
