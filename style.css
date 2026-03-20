@@ -238,63 +238,6 @@ a:hover {
 }
 
 /* ==========================================================================
-   DOODLES & DECORATIVE ELEMENTS
-   ========================================================================== */
-.doodle {
-  position: absolute;
-  pointer-events: none;
-  opacity: 0.6;
-  animation: float 6s ease-in-out infinite;
-}
-
-.doodle-1 {
-  top: 10%;
-  right: 5%;
-  width: 80px;
-  height: 80px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M20 50 Q30 30 50 50 Q70 70 80 50' stroke='%23B8860B' stroke-width='2' fill='none'/%3E%3Ccircle cx='30' cy='40' r='3' fill='%23FFD700'/%3E%3Ccircle cx='70' cy='60' r='3' fill='%23FFD700'/%3E%3C/svg%3E") no-repeat center;
-  background-size: contain;
-}
-
-.doodle-2 {
-  bottom: 15%;
-  left: 3%;
-  width: 60px;
-  height: 60px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M25 25 L75 25 M25 50 L75 50 M25 75 L75 75' stroke='%23C0C0C0' stroke-width='1.5' fill='none'/%3E%3Ccircle cx='50' cy='50' r='15' stroke='%23FFD700' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat center;
-  background-size: contain;
-  animation-delay: 2s;
-}
-
-.doodle-3 {
-  top: 60%;
-  right: 8%;
-  width: 70px;
-  height: 70px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpolygon points='50,20 80,80 20,80' fill='%23B87333' stroke='%23FFD700' stroke-width='1'/%3E%3Ccircle cx='50' cy='50' r='5' fill='%23FFD700'/%3E%3C/svg%3E") no-repeat center;
-  background-size: contain;
-  animation-delay: 4s;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  25% { transform: translateY(-10px) rotate(5deg); }
-  50% { transform: translateY(0px) rotate(-5deg); }
-  75% { transform: translateY(-5px) rotate(3deg); }
-}
-
-.hero-doodle {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 120px;
-  height: 120px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='50' font-family='Arial' font-size='40' fill='%23B8860B' text-anchor='middle' dominant-baseline='middle'%3E✨%3C/text%3E%3Ctext x='30' y='30' font-family='Arial' font-size='20' fill='%23FFD700' text-anchor='middle' dominant-baseline='middle'%3E⭐%3C/text%3E%3Ctext x='70' y='70' font-family='Arial' font-size='25' fill='%23C0C0C0' text-anchor='middle' dominant-baseline='middle'%3E🚀%3C/text%3E%3C/svg%3E") no-repeat center;
-  background-size: contain;
-  animation: float 8s ease-in-out infinite;
-}
-
-.card-doodle {
   position: absolute;
   top: -10px;
   right: -10px;

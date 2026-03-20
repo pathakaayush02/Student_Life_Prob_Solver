@@ -419,7 +419,7 @@ function renderStudyPlanner(container) {
         totalHoursBadge.textContent = `${totalHours.toFixed(1)} hours`;
         const currentExp = parseInt(totalExpDisplay.textContent || '0');
         animateCount(totalExpDisplay, isNaN(currentExp) ? 0 : currentExp, totalExp);
-        expConversionText.textContent = `Total hours: ${totalHours.toFixed(1)}h â†’ ${Math.round(totalHours * 5)} EXP possible`;
+        expConversionText.textContent = `Total hours: ${totalHours.toFixed(1)}h → ${Math.round(totalHours * 5)} EXP possible`;
         
         // Re-initialize Lucide icons for new elements
         if (typeof lucide !== 'undefined') {
@@ -749,7 +749,7 @@ function renderExpenseTracker(container) {
 /**
  * Enhanced Stress Checker
  * localStorage keys:
- * - sl_stress_responses: number[] (10 answers, 1â€“5 scale)
+ * - sl_stress_responses: number[] (10 answers, 1&ndash;5 scale)
  * - sl_stress_result: { score: number, label: string, date: string }
  */
 function renderStressChecker(container) {
@@ -1191,19 +1191,19 @@ const CAREER_DATA = [
         interests: ["Technology & IT"],
         description: "Builds and maintains websites using coding languages and frameworks.",
         skills: ["HTML", "CSS", "JavaScript", "React", "Node.js"],
-        growth: "Junior Developer â†’ Senior â†’ Tech Lead â†’ CTO",
+        growth: "Junior Developer → Senior → Tech Lead → CTO",
         education: "B.Tech in CS, Bootcamps, or Self-taught",
         nextSteps: ["Learn HTML/CSS", "Build a portfolio project", "Learn a JS framework", "Contribute to Open Source"],
         matchedInterests: []
     },
     {
         title: "Mobile App Developer",
-        interests: ["Technology & IT"],
+        interests: ["Technology & IT", "Design & Creative"],
         description: "Creates applications for mobile devices using iOS or Android platforms.",
-        skills: ["Swift", "Kotlin", "React Native", "Flutter", "Mobile UI"],
-        growth: "App Developer â†’ Senior â†’ Mobile Architect",
+        skills: ["Swift", "Kotlin", "React Native", "Flutter", "Mobile UI", "UX Design"],
+        growth: "App Developer → Senior → Mobile Architect",
         education: "CS degree or specialized mobile dev courses",
-        nextSteps: ["Learn Swift or Kotlin", "Build a simple app", "Publish to App Store/Play Store"],
+        nextSteps: ["Learn Swift or Kotlin", "Build a simple app", "Publish to App Store/Play Store", "Learn about human-centered design"],
         matchedInterests: []
     },
     {
@@ -1211,7 +1211,7 @@ const CAREER_DATA = [
         interests: ["Data & AI", "Technology & IT"],
         description: "Analyzes complex data to help organizations make informed decisions.",
         skills: ["Python", "R", "SQL", "Machine Learning", "Statistics"],
-        growth: "Data Analyst â†’ Data Scientist â†’ Senior Data Scientist â†’ Head of Data",
+        growth: "Data Analyst → Data Scientist → Senior Data Scientist → Head of Data",
         education: "Degree in Math, CS, or Data Science",
         nextSteps: ["Learn Python and SQL", "Take a Statistics course", "Work on Kaggle datasets"],
         matchedInterests: []
