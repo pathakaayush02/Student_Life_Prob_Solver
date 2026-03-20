@@ -5,10 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Workspace | Student Life Problem Solver</title>
     <link rel="stylesheet" href="style.css">
-    <button id="theme-toggle" onclick="toggleTheme()" style="position:fixed; bottom:28px; left:28px; width:48px; height:48px; border-radius:50%; background:linear-gradient(135deg,#b8960c,#7a6200); border:none; cursor:pointer; font-size:22px; display:flex; align-items:center; justify-content:center; z-index:9999; box-shadow:0 4px 16px rgba(184,150,12,0.5);">
-  🌙
-</button>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -59,26 +56,7 @@
         </div>
     </footer>
 
-    <script>
-function toggleTheme() {
-  const html = document.documentElement;
-  const current = html.getAttribute("data-theme");
-  const next = current === "dark" ? "light" : "dark";
-  html.setAttribute("data-theme", next);
-  localStorage.setItem("clutch_theme", next);
-  document.getElementById("theme-toggle").textContent = next === "dark" ? "☀️" : "🌙";
-}
-
-function loadTheme() {
-  const saved = localStorage.getItem("clutch_theme") || "light";
-  document.documentElement.setAttribute("data-theme", saved);
-  const btn = document.getElementById("theme-toggle");
-  if (btn) btn.textContent = saved === "dark" ? "☀️" : "🌙";
-}
-
-document.addEventListener("DOMContentLoaded", loadTheme);
-</script>
-<script src="app.js"></script>
+    <script src="app.js"></script>
     <script>
         // Initialize Lucide icons
         if (typeof lucide !== 'undefined') {

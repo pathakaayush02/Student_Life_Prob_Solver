@@ -90,20 +90,25 @@ html {
   scroll-behavior: smooth;
 }
 
-*, *::before, *::after {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-}
 
 body {
   font-family: var(--font-family);
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-body);
   line-height: var(--line-height-body);
-  color: var(--text-primary);
-  background: var(--bg-primary);
+  color: #1a1a1a;
+  background: #f5f5f0;
   min-height: 100vh;
   scroll-behavior: smooth;
-  transition: background 0.3s ease, color 0.3s ease;
+}
+
+p {
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-body);
+  line-height: var(--line-height-body);
+  color: #4a4a4a;
+  margin-bottom: 1rem;
 }
 
 /* ==========================================================================
@@ -121,10 +126,10 @@ body {
    ========================================================================== */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-family);
-  font-weight: var(--font-weight-h2);
+  font-weight: var(--font-weight-heading);
   line-height: var(--line-height-heading);
-  color: var(--color-heading);
-  margin-bottom: 1rem;
+  color: #1a1a1a;
+  margin-bottom: 0.5rem;
 }
 
 h1 {
@@ -255,13 +260,14 @@ a:hover {
    CARDS - Premium Professional Design
    ========================================================================== */
 .card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-card);
+  background: #ffffff;
+  border: 1px solid #e8e0cc;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(184, 150, 12, 0.08);
   padding: 2rem;
   position: relative;
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .card::before {
@@ -322,9 +328,6 @@ a:hover {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: var(--nav-bg);
-  border-bottom: 1px solid var(--border-color);
-  transition: background 0.3s ease;
 }
 
 .breadcrumb {
@@ -569,12 +572,13 @@ a:hover {
 }
 
 .tool-card {
-  background-color: var(--bg-surface);
+  background: linear-gradient(145deg, #FFFFFF 0%, #F8F9FA 100%);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
   padding: var(--spacing-card);
-  box-shadow: var(--shadow-card);
-  transition: all var(--transition-slow);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-base);
   text-decoration: none;
   color: inherit;
   display: block;
@@ -688,16 +692,19 @@ a:hover {
   display: block;
   font-weight: var(--font-weight-button);
   margin-bottom: 0.5rem;
-  color: var(--color-heading);
+  color: #5a4a00;
 }
 
 .form-input,
-.form-select {
+.form-input {
   width: 100%;
-  padding: 12px 16px;
-  border: 1px solid var(--color-border);
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--color-border);
   border-radius: var(--radius-button);
   font-size: var(--font-size-body);
+  font-family: var(--font-family);
+  background: #ffffff;
+  color: #1a1a1a;
   transition: all var(--transition-base);
   min-height: 44px;
 }
@@ -880,95 +887,7 @@ a:hover {
   --shadow-strong: 0 12px 40px rgba(0, 0, 0, 0.16);
 }
 
-html[data-theme="dark"] {
-  --bg-primary: #0e0e0e;
-  --bg-secondary: #1a1a1a;
-  --bg-card: #1c1c1c;
-  --text-primary: #f0e6c8;
-  --text-secondary: #c9b98a;
-  --text-muted: #8a7a5a;
-  --border-color: #2a2a2a;
-  --nav-bg: #0a0a0a;
-  --input-bg: #252525;
-  --shadow: rgba(0,0,0,0.5);
-}
 
-html[data-theme="light"] {
-  --bg-primary: #f5f5f0;
-  --bg-secondary: #ffffff;
-  --bg-card: #ffffff;
-  --text-primary: #1a1a1a;
-  --text-secondary: #444444;
-  --text-muted: #888888;
-  --border-color: #e0e0d0;
-  --nav-bg: #ffffff;
-  --input-bg: #ffffff;
-  --shadow: rgba(0,0,0,0.08);
-}
-
-.card, .tool-card, [class*="card"], .stats-box,
-.tool-section > div, .section-box, .info-card {
-  background: var(--bg-card) !important;
-  border-color: var(--border-color) !important;
-  color: var(--text-primary) !important;
-}
-
-input, select, textarea {
-  background: var(--input-bg) !important;
-  color: var(--text-primary) !important;
-  border-color: var(--border-color) !important;
-}
-
-input::placeholder {
-  color: var(--text-muted) !important;
-}
-
-[data-theme="dark"] .hero-section,
-[data-theme="dark"] body {
-  background: #0e0e0e;
-}
-
-nav, .navbar, header {
-  background: var(--nav-bg) !important;
-  border-bottom: 1px solid var(--border-color) !important;
-}
-
-nav a, nav span, .breadcrumb {
-  color: var(--text-secondary) !important;
-}
-
-/* These must NEVER change between modes */
-.btn-gold, .open-tool-btn, .gold-btn,
-button[style*="b8960c"], button[style*="7a6200"] {
-  background: linear-gradient(135deg, #b8960c, #7a6200) !important;
-  color: white !important;
-}
-
-.chip.selected {
-  background: #b8960c !important;
-  color: white !important;
-}
-
-/* Dark mode for workspace tool sections specifically */
-html[data-theme="dark"] #tool-study,
-html[data-theme="dark"] #tool-expense,
-html[data-theme="dark"] #tool-stress,
-html[data-theme="dark"] #tool-career,
-html[data-theme="dark"] #tool-pomodoro,
-html[data-theme="dark"] #tool-clutchai {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-}
-
-html[data-theme="dark"] #tool-study *,
-html[data-theme="dark"] #tool-expense *,
-html[data-theme="dark"] #tool-stress *,
-html[data-theme="dark"] #tool-career *,
-html[data-theme="dark"] #tool-pomodoro *,
-html[data-theme="dark"] #tool-clutchai * {
-  color: var(--text-primary);
-  border-color: var(--border-color);
-}
 
 /* ==========================================================================
    CAREER HELPER CHIPS
@@ -979,8 +898,8 @@ html[data-theme="dark"] #tool-clutchai * {
   margin: 6px;
   border-radius: 20px;
   border: 2px solid #b8960c;
-  background: var(--bg-card);
-  color: var(--text-primary);
+  background: white;
+  color: #3d3000;
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
@@ -991,6 +910,23 @@ html[data-theme="dark"] #tool-clutchai * {
 .chip:hover {
   background: #fdf3c0;
   box-shadow: 0 0 8px rgba(184, 150, 12, 0.4);
+}
+
+.stats-box, .info-panel {
+  background: #fffbe6;
+  border: 1px solid #e8d88a;
+}
+
+.section-heading, .tool-title {
+  color: #3d3000;
+}
+
+.card-title, h2 {
+  color: #2a2000;
+}
+
+.card {
+  border-left: 3px solid #b8960c;
 }
 
 .chip.selected {
