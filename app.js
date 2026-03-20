@@ -2183,38 +2183,28 @@ let deferredPrompt = null;
 window.addEventListener("beforeinstallprompt", function(e) {
   e.preventDefault();
   deferredPrompt = e;
+  const btn = document.getElementById("pwa-install-btn");
   const banner = document.getElementById("install-banner");
-  if (banner) banner.style.display = "block";
+  if (btn) btn.style.display = "inline-block";
+  if (banner) banner.style.display = "none";
 });
 
-document.addEventListener("DOMContentLoaded", function() {
-  const installBtn = document.getElementById("install-btn");
-  const dismissBtn = document.getElementById("install-dismiss");
-  const banner = document.getElementById("install-banner");
-
-  if (installBtn) {
-    installBtn.addEventListener("click", function() {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(function(result) {
-          console.log("PWA install:", result.outcome);
-          deferredPrompt = null;
-          if (banner) banner.style.display = "none";
-        });
-      }
+function installPWA() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function(result) {
+      console.log("PWA install:", result.outcome);
+      deferredPrompt = null;
+      const btn = document.getElementById("pwa-install-btn");
+      if (btn) btn.style.display = "none";
     });
   }
-
-  if (dismissBtn) {
-    dismissBtn.addEventListener("click", function() {
-      if (banner) banner.style.display = "none";
-    });
-  }
-});
+}
 
 window.addEventListener("appinstalled", function() {
-  console.log("CLUTCH installed successfully!");
+  const btn = document.getElementById("pwa-install-btn");
   const banner = document.getElementById("install-banner");
+  if (btn) btn.style.display = "none";
   if (banner) banner.style.display = "none";
 });
 

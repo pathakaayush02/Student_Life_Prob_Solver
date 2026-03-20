@@ -172,6 +172,13 @@
   z-index: 2;
 }
 
+/* PWA Download App button hover effect */
+#pwa-install-btn:hover {
+  background: linear-gradient(135deg, #5C4400, #3a2800);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(139, 105, 20, 0.4);
+}
+
 /* Fix 6 — Close Tool button styling */
 .close-tool-btn {
   display: inline-block;
