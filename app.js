@@ -2164,4 +2164,58 @@ function animateCount(element, from, to, duration = 600) {
     requestAnimationFrame(step);
 }
 
+// PWA Service Worker Registration
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function() {
+    navigator.serviceWorker.register("/Student_Life_Prob_Solver/sw.js")
+      .then(function(reg) {
+        console.log("CLUTCH SW registered:", reg.scope);
+      })
+      .catch(function(err) {
+        console.log("SW registration failed:", err);
+      });
+  });
+}
+
+// PWA Install Prompt
+let deferredPrompt = null;
+
+window.addEventListener("beforeinstallprompt", function(e) {
+  e.preventDefault();
+  deferredPrompt = e;
+  const banner = document.getElementById("install-banner");
+  if (banner) banner.style.display = "block";
+});
+
+document.addEventListener("DOMContentLoaded", function() {
+  const installBtn = document.getElementById("install-btn");
+  const dismissBtn = document.getElementById("install-dismiss");
+  const banner = document.getElementById("install-banner");
+
+  if (installBtn) {
+    installBtn.addEventListener("click", function() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function(result) {
+          console.log("PWA install:", result.outcome);
+          deferredPrompt = null;
+          if (banner) banner.style.display = "none";
+        });
+      }
+    });
+  }
+
+  if (dismissBtn) {
+    dismissBtn.addEventListener("click", function() {
+      if (banner) banner.style.display = "none";
+    });
+  }
+});
+
+window.addEventListener("appinstalled", function() {
+  console.log("CLUTCH installed successfully!");
+  const banner = document.getElementById("install-banner");
+  if (banner) banner.style.display = "none";
+});
+
 // End of app.js

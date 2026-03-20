@@ -1,0 +1,25 @@
+{
+  "name": "CLUTCH — A Student Toolkit",
+  "short_name": "CLUTCH",
+  "description": "Your all-in-one student toolkit. Study smarter, spend wisely, stay calm, build your future.",
+  "start_url": "/Student_Life_Prob_Solver/",
+  "scope": "/Student_Life_Prob_Solver/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5f5f0",
+  "theme_color": "#8B6914",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

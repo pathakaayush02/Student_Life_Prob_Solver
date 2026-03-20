@@ -10,9 +10,29 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#8B6914">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="CLUTCH">
+    <link rel="apple-touch-icon" href="logo.png">
 </head>
 <body class="bg-page">
     <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <div id="install-banner" style="display:none; position:fixed; bottom:24px; right:24px; background:linear-gradient(135deg,#8B6914,#5C4400); color:white; padding:14px 20px; border-radius:14px; box-shadow:0 8px 24px rgba(139,105,20,0.4); z-index:9999; max-width:280px; font-size:14px;">
+      <div style="font-weight:700; margin-bottom:6px;">📲 Install CLUTCH</div>
+      <div style="opacity:0.9; font-size:13px; margin-bottom:12px;">Add to your home screen for quick access anytime!</div>
+      <div style="display:flex; gap:10px;">
+        <button id="install-btn" style="background:white; color:#5C4400; border:none; padding:8px 16px; border-radius:8px; font-weight:700; cursor:pointer; font-size:13px;">
+          Install
+        </button>
+        <button id="install-dismiss" style="background:rgba(255,255,255,0.2); color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:13px;">
+          Not now
+        </button>
+      </div>
+    </div>
     
     <div class="doodle doodle-1"></div>
     <div class="doodle doodle-2"></div>
