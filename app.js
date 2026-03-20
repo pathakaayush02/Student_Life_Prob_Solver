@@ -2180,13 +2180,18 @@ if ("serviceWorker" in navigator) {
 // PWA Install Prompt
 let deferredPrompt = null;
 
-window.addEventListener("beforeinstallprompt", function(e) {
-  e.preventDefault();
-  deferredPrompt = e;
+document.addEventListener("DOMContentLoaded", function() {
   const btn = document.getElementById("pwa-install-btn");
-  const banner = document.getElementById("install-banner");
-  if (btn) btn.style.display = "inline-block";
-  if (banner) banner.style.display = "none";
+
+  window.addEventListener("beforeinstallprompt", function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (btn) btn.style.display = "inline-block";
+  });
+
+  if (window.matchMedia("(display-mode: standalone)").matches) {
+    if (btn) btn.style.display = "none";
+  }
 });
 
 function installPWA() {
