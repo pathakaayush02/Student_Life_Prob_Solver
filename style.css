@@ -191,25 +191,38 @@
 }
 
 .btn-explore,
-.btn-survey {
+.btn-survey,
+#pwa-install-btn {
+  display: inline-block;
   padding: 14px 28px;
   background: linear-gradient(135deg, #8B6914, #5C4400);
-  color: white;
-  text-decoration: none;
-  border-radius: 12px;
+  color: white !important;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
   cursor: pointer;
+  text-decoration: none !important;
   letter-spacing: 0.3px;
-  box-shadow: 0 4px 12px rgba(139, 105, 20, 0.3);
+  box-shadow: 0 4px 12px rgba(139, 105, 20, 0.35);
   transition: all 0.3s ease;
 }
 
 .btn-explore:hover,
-.btn-survey:hover {
+.btn-survey:hover,
+#pwa-install-btn:hover {
   background: linear-gradient(135deg, #5C4400, #3a2800);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(139, 105, 20, 0.4);
+  box-shadow: 0 6px 18px rgba(139, 105, 20, 0.45);
+  color: white !important;
+  text-decoration: none !important;
+}
+
+.btn-explore:active,
+.btn-survey:active,
+#pwa-install-btn:active {
+  transform: translateY(0px);
+  box-shadow: 0 2px 8px rgba(139, 105, 20, 0.3);
 }
 
 @media (max-width: 768px) {
