@@ -90,12 +90,16 @@ html {
   scroll-behavior: smooth;
 }
 
+*, *::before, *::after {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
 body {
   font-family: var(--font-family);
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-body);
   line-height: var(--line-height-body);
-  color: var(--color-text);
+  color: var(--text-primary);
   background: var(--bg-primary);
   min-height: 100vh;
   scroll-behavior: smooth;
@@ -207,7 +211,7 @@ a:hover {
 }
 
 .btn-secondary {
-  background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%);
+  background: var(--bg-card);
   color: var(--color-primary);
   border: 2px solid var(--color-metallic-silver);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -874,43 +878,49 @@ a:hover {
   --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
   --shadow-medium: 0 8px 30px rgba(0, 0, 0, 0.12);
   --shadow-strong: 0 12px 40px rgba(0, 0, 0, 0.16);
-  
-  /* Theme Variables */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f5f5f0;
-  --bg-card: #ffffff;
-  --text-primary: #1a1a1a;
-  --text-secondary: #555555;
-  --text-muted: #888888;
-  --border-color: #e0e0e0;
-  --nav-bg: #ffffff;
 }
 
-[data-theme="dark"] {
+html[data-theme="dark"] {
   --bg-primary: #0e0e0e;
   --bg-secondary: #1a1a1a;
-  --bg-card: #141414;
+  --bg-card: #1c1c1c;
   --text-primary: #f0e6c8;
   --text-secondary: #c9b98a;
   --text-muted: #8a7a5a;
   --border-color: #2a2a2a;
-  --nav-bg: #0e0e0e;
+  --nav-bg: #0a0a0a;
+  --input-bg: #252525;
+  --shadow: rgba(0,0,0,0.5);
 }
 
-[data-theme="dark"] .card,
-[data-theme="dark"] .tool-card,
-[data-theme="dark"] .tool-section {
-  background: #141414;
-  border: 1px solid #2a2a2a;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+html[data-theme="light"] {
+  --bg-primary: #f5f5f0;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --text-primary: #1a1a1a;
+  --text-secondary: #444444;
+  --text-muted: #888888;
+  --border-color: #e0e0d0;
+  --nav-bg: #ffffff;
+  --input-bg: #ffffff;
+  --shadow: rgba(0,0,0,0.08);
 }
 
-[data-theme="dark"] input,
-[data-theme="dark"] select,
-[data-theme="dark"] textarea {
-  background: #1e1e1e;
-  color: #f0e6c8;
-  border-color: #3a3a3a;
+.card, .tool-card, [class*="card"], .stats-box,
+.tool-section > div, .section-box, .info-card {
+  background: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+input, select, textarea {
+  background: var(--input-bg) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+input::placeholder {
+  color: var(--text-muted) !important;
 }
 
 [data-theme="dark"] .hero-section,
@@ -918,9 +928,46 @@ a:hover {
   background: #0e0e0e;
 }
 
-[data-theme="dark"] nav {
-  background: #0a0a0a;
-  border-bottom: 1px solid #b8960c;
+nav, .navbar, header {
+  background: var(--nav-bg) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+nav a, nav span, .breadcrumb {
+  color: var(--text-secondary) !important;
+}
+
+/* These must NEVER change between modes */
+.btn-gold, .open-tool-btn, .gold-btn,
+button[style*="b8960c"], button[style*="7a6200"] {
+  background: linear-gradient(135deg, #b8960c, #7a6200) !important;
+  color: white !important;
+}
+
+.chip.selected {
+  background: #b8960c !important;
+  color: white !important;
+}
+
+/* Dark mode for workspace tool sections specifically */
+html[data-theme="dark"] #tool-study,
+html[data-theme="dark"] #tool-expense,
+html[data-theme="dark"] #tool-stress,
+html[data-theme="dark"] #tool-career,
+html[data-theme="dark"] #tool-pomodoro,
+html[data-theme="dark"] #tool-clutchai {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] #tool-study *,
+html[data-theme="dark"] #tool-expense *,
+html[data-theme="dark"] #tool-stress *,
+html[data-theme="dark"] #tool-career *,
+html[data-theme="dark"] #tool-pomodoro *,
+html[data-theme="dark"] #tool-clutchai * {
+  color: var(--text-primary);
+  border-color: var(--border-color);
 }
 
 /* ==========================================================================
@@ -932,8 +979,8 @@ a:hover {
   margin: 6px;
   border-radius: 20px;
   border: 2px solid #b8960c;
-  background: white;
-  color: #3d3000;
+  background: var(--bg-card);
+  color: var(--text-primary);
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
