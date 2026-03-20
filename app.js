@@ -6,7 +6,7 @@
  * 
  * LocalStorage Keys:
  * - sl_study_tasks: Array of { id, subject, hours, completed, earnedExp, priority }
- * - sl_total_exp: Number (Total EXP earned from study tasks)
+ * - clutch_exp: Number (Total EXP earned from study tasks)
  * - slps_expenses: Array of { id, name, category, amount, date }
  * - sl_savings_amount: Number (User's monthly savings target)
  * - sl_savings_points: Number (Points awarded based on savings percentage)
@@ -210,6 +210,51 @@ function initFeedbackScroll() {
 }
 
 /* -------------------------------------------------------------------------- */
+/*                               EXP Level System                              */
+/* -------------------------------------------------------------------------- */
+
+const EXP_LEVELS = [
+  { level: 1, title: "Freshman",     min: 0,    max: 99   },
+  { level: 2, title: "Scholar",      min: 100,  max: 249  },
+  { level: 3, title: "Achiever",     min: 250,  max: 499  },
+  { level: 4, title: "Hustler",      min: 500,  max: 899  },
+  { level: 5, title: "Expert",       min: 900,  max: 1399 },
+  { level: 6, title: "Mastermind",   min: 1400, max: 1999 },
+  { level: 7, title: "Legend",       min: 2000, max: 2999 },
+  { level: 8, title: "CLUTCH Master",min: 3000, max: 99999}
+];
+
+function getCurrentLevel(exp) {
+  return EXP_LEVELS.findLast(l => exp >= l.min) || EXP_LEVELS[0];
+}
+
+function getNextLevel(exp) {
+  return EXP_LEVELS.find(l => exp < l.min) || null;
+}
+
+function updateLevelUI(exp) {
+  const current = getCurrentLevel(exp);
+  const next = getNextLevel(exp);
+
+  const levelEl = document.getElementById("exp-level-title");
+  const levelNum = document.getElementById("exp-level-num");
+  const expBar = document.getElementById("exp-progress-bar");
+  const expBarText = document.getElementById("exp-bar-text");
+
+  if (levelEl) levelEl.textContent = current.title;
+  if (levelNum) levelNum.textContent = "Level " + current.level;
+
+  if (next) {
+    const progress = ((exp - current.min) / (next.min - current.min)) * 100;
+    if (expBar) expBar.style.width = Math.min(progress, 100) + "%";
+    if (expBarText) expBarText.textContent = exp + " / " + next.min + " EXP";
+  } else {
+    if (expBar) expBar.style.width = "100%";
+    if (expBarText) expBarText.textContent = "MAX LEVEL 🏆";
+  }
+}
+
+/* -------------------------------------------------------------------------- */
 /*                               Workspace Init                               */
 /* -------------------------------------------------------------------------- */
 
@@ -319,13 +364,26 @@ function renderStudyPlanner(container) {
             <aside class="planner-sidebar">
                 <div class="card">
                     <h3>EXP System</h3>
-                    <div style="text-align: center; padding: 2rem 0;">
-                        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
-                            <i data-lucide="star" width="40" height="40" style="color: white;"></i>
-                        </div>
-                        <div id="totalExpDisplay" style="font-size: 2.5rem; font-weight: 800; color: var(--color-heading); line-height: 1;">0</div>
-                        <div style="color: var(--color-muted); font-size: 0.9rem;">TOTAL EXP</div>
-                    </div>
+                    <div style="text-align:center; padding:16px 0;">
+
+  <div style="font-size:13px; font-weight:600; color:#b8960c; letter-spacing:1px; margin-bottom:4px;" id="exp-level-num">Level 1</div>
+
+  <div style="font-size:22px; font-weight:700; color:var(--text-primary); margin-bottom:2px;" id="exp-level-title">Freshman</div>
+
+  <div style="width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,#b8960c,#7a6200); display:flex; align-items:center; justify-content:center; margin:12px auto; flex-direction:column;">
+    <span style="font-size:24px; font-weight:700; color:white;" id="totalExpDisplay">0</span>
+    <span style="font-size:10px; color:rgba(255,255,255,0.8);">EXP</span>
+  </div>
+
+  <div style="margin:12px 0 4px; font-size:12px; color:var(--text-muted);" id="exp-bar-text">0 / 100 EXP</div>
+
+  <div style="background:var(--border-color); border-radius:10px; height:8px; overflow:hidden; margin:0 8px;">
+    <div id="exp-progress-bar" style="height:100%; width:0%; background:linear-gradient(90deg,#b8960c,#f0c040); border-radius:10px; transition:width 0.5s ease;"></div>
+  </div>
+
+  <div style="font-size:12px; color:var(--text-muted); margin-top:8px;">Next level progress</div>
+
+</div>
                     <div style="background: var(--bg-soft-highlight); padding: 1rem; border-radius: var(--radius-button); margin-bottom: 1rem;">
                         <div style="font-weight: 600; margin-bottom: 0.5rem;">Conversion Rate</div>
                         <div style="color: var(--color-muted); font-size: 0.9rem;">1 Hour = 5 EXP</div>
@@ -370,7 +428,7 @@ function renderStudyPlanner(container) {
             localStorage.setItem('sl_study_tasks', JSON.stringify(tasks));
         }
 
-        const totalExp = parseInt(localStorage.getItem('sl_total_exp') || '0');
+        const totalExp = parseInt(localStorage.getItem('clutch_exp') || '0');
         
         taskList.innerHTML = '';
         let totalHours = 0;
@@ -420,6 +478,7 @@ function renderStudyPlanner(container) {
         const currentExp = parseInt(totalExpDisplay.textContent || '0');
         animateCount(totalExpDisplay, isNaN(currentExp) ? 0 : currentExp, totalExp);
         expConversionText.textContent = `Total hours: ${totalHours.toFixed(1)}h → ${Math.round(totalHours * 5)} EXP possible`;
+        updateLevelUI(totalExp);
         
         // Re-initialize Lucide icons for new elements
         if (typeof lucide !== 'undefined') {
@@ -437,7 +496,7 @@ function renderStudyPlanner(container) {
         const wasCompleted = task.completed;
         task.completed = !wasCompleted;
         
-        let totalExp = parseInt(localStorage.getItem('sl_total_exp') || '0');
+        let totalExp = parseInt(localStorage.getItem('clutch_exp') || '0');
         const expChange = calculateEarnedExp(task.hours);
 
         if (task.completed) {
@@ -453,7 +512,7 @@ function renderStudyPlanner(container) {
         }
 
         localStorage.setItem('sl_study_tasks', JSON.stringify(tasks));
-        localStorage.setItem('sl_total_exp', totalExp);
+        localStorage.setItem('clutch_exp', totalExp);
         loadTasks();
     };
 
@@ -465,9 +524,9 @@ function renderStudyPlanner(container) {
 
         const task = tasks[taskIndex];
         if (task.completed) {
-            let totalExp = parseInt(localStorage.getItem('sl_total_exp') || '0');
+            let totalExp = parseInt(localStorage.getItem('clutch_exp') || '0');
             totalExp -= task.earnedExp;
-            localStorage.setItem('sl_total_exp', totalExp);
+            localStorage.setItem('clutch_exp', totalExp);
         }
 
         tasks.splice(taskIndex, 1);
@@ -480,7 +539,7 @@ function renderStudyPlanner(container) {
             const tasks = JSON.parse(localStorage.getItem('sl_study_tasks') || '[]');
             const updatedTasks = tasks.map(t => ({ ...t, completed: false, earnedExp: 0 }));
             localStorage.setItem('sl_study_tasks', JSON.stringify(updatedTasks));
-            localStorage.setItem('sl_total_exp', 0);
+            localStorage.setItem('clutch_exp', 0);
             loadTasks();
             announce('EXP and task completion have been reset.');
         }
@@ -1769,12 +1828,26 @@ function renderPomodoroTimer(container) {
             <aside class="planner-sidebar">
                 <div class="card">
                     <h3>Session Stats</h3>
-                    <div style="text-align: center; padding: 2rem 0;">
-                        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
-                            <span style="font-size: 2rem; font-weight: 800; color: white;" id="totalExpDisplay">0</span>
-                        </div>
-                        <div style="font-size: 0.9rem; color: var(--color-muted);">EXP Earned</div>
-                    </div>
+                    <div style="text-align:center; padding:16px 0;">
+
+  <div style="font-size:13px; font-weight:600; color:#b8960c; letter-spacing:1px; margin-bottom:4px;" id="exp-level-num">Level 1</div>
+
+  <div style="font-size:22px; font-weight:700; color:var(--text-primary); margin-bottom:2px;" id="exp-level-title">Freshman</div>
+
+  <div style="width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,#b8960c,#7a6200); display:flex; align-items:center; justify-content:center; margin:12px auto; flex-direction:column;">
+    <span style="font-size:24px; font-weight:700; color:white;" id="totalExpDisplay">0</span>
+    <span style="font-size:10px; color:rgba(255,255,255,0.8);">EXP</span>
+  </div>
+
+  <div style="margin:12px 0 4px; font-size:12px; color:var(--text-muted);" id="exp-bar-text">0 / 100 EXP</div>
+
+  <div style="background:var(--border-color); border-radius:10px; height:8px; overflow:hidden; margin:0 8px;">
+    <div id="exp-progress-bar" style="height:100%; width:0%; background:linear-gradient(90deg,#b8960c,#f0c040); border-radius:10px; transition:width 0.5s ease;"></div>
+  </div>
+
+  <div style="font-size:12px; color:var(--text-muted); margin-top:8px;">Next level progress</div>
+
+</div>
                     
                     <div style="background: var(--bg-soft-highlight); padding: 1rem; border-radius: var(--radius-button); margin-bottom: 1rem;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
@@ -1911,6 +1984,7 @@ function renderPomodoroTimer(container) {
         totalExpDisplay.textContent = totalExp;
         totalSetsDisplay.textContent = Math.floor(sessionCount / 4);
         totalFocusTimeDisplay.textContent = totalFocusMinutes + " min";
+        updateLevelUI(totalExp);
     }
 
     function saveStats() {

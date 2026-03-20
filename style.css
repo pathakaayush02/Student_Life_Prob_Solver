@@ -95,10 +95,11 @@ body {
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-body);
   line-height: var(--line-height-body);
-  color: var(--color-body);
-  background-color: var(--bg-page);
+  color: var(--color-text);
+  background: var(--bg-primary);
   min-height: 100vh;
-  overflow-x: hidden;
+  scroll-behavior: smooth;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* ==========================================================================
@@ -247,19 +248,16 @@ a:hover {
   background-size: contain;
   opacity: 0.8;
 }
-
-/* ==========================================================================
    CARDS - Premium Professional Design
    ========================================================================== */
 .card {
-  background: linear-gradient(145deg, #FFFFFF 0%, #F8F9FA 100%);
-  border: 1px solid var(--color-border);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-card);
-  padding: var(--spacing-card);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: all var(--transition-slow);
+  padding: 2rem;
   position: relative;
   overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease;
 }
 
 .card::before {
@@ -316,6 +314,13 @@ a:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 1rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--nav-bg);
+  border-bottom: 1px solid var(--border-color);
+  transition: background 0.3s ease;
 }
 
 .breadcrumb {
@@ -845,6 +850,77 @@ a:hover {
   html {
     scroll-behavior: auto;
   }
+}
+
+/* ==========================================================================
+   GLOBAL VARIABLES & RESET
+   ========================================================================== */
+:root {
+  --color-primary: #b8960c;
+  --color-secondary: #7a6200;
+  --color-accent: #f0c040;
+  --color-success: #10b981;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --color-heading: #3d3000;
+  --color-text: #4b5563;
+  --color-muted: #6b7280;
+  --color-background: #fefdf9;
+  --color-surface: #ffffff;
+  --color-border: #e5c890;
+  --bg-soft-highlight: #fffef5;
+  --radius-button: 12px;
+  --radius-card: 16px;
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --shadow-medium: 0 8px 30px rgba(0, 0, 0, 0.12);
+  --shadow-strong: 0 12px 40px rgba(0, 0, 0, 0.16);
+  
+  /* Theme Variables */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f0;
+  --bg-card: #ffffff;
+  --text-primary: #1a1a1a;
+  --text-secondary: #555555;
+  --text-muted: #888888;
+  --border-color: #e0e0e0;
+  --nav-bg: #ffffff;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #0e0e0e;
+  --bg-secondary: #1a1a1a;
+  --bg-card: #141414;
+  --text-primary: #f0e6c8;
+  --text-secondary: #c9b98a;
+  --text-muted: #8a7a5a;
+  --border-color: #2a2a2a;
+  --nav-bg: #0e0e0e;
+}
+
+[data-theme="dark"] .card,
+[data-theme="dark"] .tool-card,
+[data-theme="dark"] .tool-section {
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: #1e1e1e;
+  color: #f0e6c8;
+  border-color: #3a3a3a;
+}
+
+[data-theme="dark"] .hero-section,
+[data-theme="dark"] body {
+  background: #0e0e0e;
+}
+
+[data-theme="dark"] nav {
+  background: #0a0a0a;
+  border-bottom: 1px solid #b8960c;
 }
 
 /* ==========================================================================
