@@ -393,6 +393,11 @@ function renderStudyPlanner(container) {
                 </div>
             </aside>
         </div>
+        <div style="display:flex; justify-content:flex-end; margin-top:32px; padding-top:16px; border-top:1px solid #e8d88a;">
+          <a href="index.html" class="close-tool-btn">
+            Close Tool
+          </a>
+        </div>
         <div id="ariaAnnouncer" class="sr-only" aria-live="polite"></div>
     `;
 
@@ -656,6 +661,11 @@ function renderExpenseTracker(container) {
                 </div>
             </aside>
         </div>
+        <div style="display:flex; justify-content:flex-end; margin-top:32px; padding-top:16px; border-top:1px solid #e8d88a;">
+          <a href="index.html" class="close-tool-btn">
+            Close Tool
+          </a>
+        </div>
         <div id="ariaAnnouncer" class="sr-only" aria-live="polite"></div>
     `;
 
@@ -867,6 +877,11 @@ function renderStressChecker(container) {
                     </div>
                 </div>
             </div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; margin-top:32px; padding-top:16px; border-top:1px solid #e8d88a;">
+          <a href="index.html" class="close-tool-btn">
+            Close Tool
+          </a>
         </div>
     `;
 
@@ -1429,6 +1444,11 @@ function renderCareerHelper(container) {
             
             <div id="career-result" style="display:none; margin-top:24px;"></div>
         </div>
+        <div style="display:flex; justify-content:flex-end; margin-top:32px; padding-top:16px; border-top:1px solid #e8d88a;">
+          <a href="index.html" class="close-tool-btn">
+            Close Tool
+          </a>
+        </div>
     `;
 
     const interests = [
@@ -1870,6 +1890,11 @@ function renderPomodoroTimer(container) {
                 </div>
             </aside>
         </div>
+        <div style="display:flex; justify-content:flex-end; margin-top:32px; padding-top:16px; border-top:1px solid #e8d88a;">
+          <a href="index.html" class="close-tool-btn">
+            Close Tool
+          </a>
+        </div>
         <div id="ariaAnnouncer" class="sr-only" aria-live="polite"></div>
     `;
 
@@ -2074,6 +2099,11 @@ function renderClutchAI(container) {
 
           <p style="text-align:center; font-size:12px; color:#bbb; margin-top:16px;">Powered by CLUTCH AI · Here to listen</p>
 
+        </div>
+        <div style="display:flex; justify-content:flex-end; margin-top:32px; padding-top:16px; border-top:1px solid #e8d88a;">
+          <a href="index.html" class="close-tool-btn">
+            Close Tool
+          </a>
         </div>
     `;
 }

@@ -75,7 +75,7 @@
         <section id="tools" class="tool-section">
             <h1 class="text-center">Everything You Need in <span class="text-accent">One Place</span></h1>
             <div class="tool-grid">
-                <a href="workspace.html?tool=study" class="tool-card" aria-label="Open Study Planner">
+                <div class="tool-card" aria-label="Study Planner">
                     <span class="card-corner-accent">⊕</span>
                     <div class="card-doodle"></div>
                     <div class="tool-icon">
@@ -83,10 +83,10 @@
                     </div>
                     <h2>Study Planner</h2>
                     <p>Organize subjects, set goals, and track every study hour. Exams won't catch you off guard.</p>
-                    <span class="btn btn-primary">Open Tool</span>
-                </a>
+                    <a href="workspace.html?tool=study" class="btn btn-primary open-tool-btn">Open Tool</a>
+                </div>
                 
-                <a href="workspace.html?tool=expense" class="tool-card" aria-label="Open Expense Tracker">
+                <div class="tool-card" aria-label="Expense Tracker">
                     <span class="card-corner-accent">⊕</span>
                     <div class="card-doodle"></div>
                     <div class="tool-icon">
@@ -94,10 +94,10 @@
                     </div>
                     <h2>Expense Tracker</h2>
                     <p>Log spending, set a monthly budget, and finally know where your money goes.</p>
-                    <span class="btn btn-primary">Open Tool</span>
-                </a>
+                    <a href="workspace.html?tool=expense" class="btn btn-primary open-tool-btn">Open Tool</a>
+                </div>
                 
-                <a href="workspace.html?tool=stress" class="tool-card" aria-label="Open Stress Checker">
+                <div class="tool-card" aria-label="Stress Checker">
                     <span class="card-corner-accent">⊕</span>
                     <div class="card-doodle"></div>
                     <div class="tool-icon">
@@ -105,10 +105,10 @@
                     </div>
                     <h2>Stress Checker</h2>
                     <p>Measure your stress levels and get actionable tips to stay balanced.</p>
-                    <span class="btn btn-primary">Open Tool</span>
-                </a>
+                    <a href="workspace.html?tool=stress" class="btn btn-primary open-tool-btn">Open Tool</a>
+                </div>
                 
-                <a href="workspace.html?tool=career" class="tool-card" aria-label="Open Career Helper">
+                <div class="tool-card" aria-label="Career Helper">
                     <span class="card-corner-accent">⊕</span>
                     <div class="card-doodle"></div>
                     <div class="tool-icon">
@@ -116,10 +116,10 @@
                     </div>
                     <h2>Career Helper</h2>
                     <p>Discover career paths that match your interests and skills before you have to decide.</p>
-                    <span class="btn btn-primary">Open Tool</span>
-                </a>
+                    <a href="workspace.html?tool=career" class="btn btn-primary open-tool-btn">Open Tool</a>
+                </div>
                 
-                <a href="workspace.html?tool=pomodoro" class="tool-card" aria-label="Open Focus Timer">
+                <div class="tool-card" aria-label="Focus Timer">
                     <span class="card-corner-accent">⊕</span>
                     <div class="card-doodle"></div>
                     <div class="tool-icon">
@@ -127,10 +127,10 @@
                     </div>
                     <h2>Focus Timer</h2>
                     <p>Use Pomodoro intervals to study with full focus, earn EXP, and build a real productivity streak.</p>
-                    <span class="btn btn-primary">Open Tool</span>
-                </a>
+                    <a href="workspace.html?tool=pomodoro" class="btn btn-primary open-tool-btn">Open Tool</a>
+                </div>
                 
-                <a href="workspace.html?tool=clutchai" class="tool-card" aria-label="Open CLUTCH AI">
+                <div class="tool-card" aria-label="CLUTCH AI">
                     <span class="card-corner-accent">⊕</span>
                     <div class="card-doodle"></div>
                     <div class="tool-icon">
@@ -138,8 +138,8 @@
                     </div>
                     <h2>CLUTCH AI</h2>
                     <p>Feeling overwhelmed? Talk to CLUTCH AI — it listens, understands your emotions, and lifts your mood.</p>
-                    <span class="btn btn-primary">Open Tool</span>
-                </a>
+                    <a href="workspace.html?tool=clutchai" class="btn btn-primary open-tool-btn">Open Tool</a>
+                </div>
             </div>
         </section>
     </main>
@@ -161,6 +161,39 @@
     </footer>
 
     <script src="app.js"></script>
+    <style>
+    body {
+      animation: pageIn 0.4s ease forwards;
+    }
+
+    @keyframes pageIn {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    </style>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      document.querySelectorAll("a[href]").forEach(function(link) {
+        const href = link.getAttribute("href");
+        if (!href || href.startsWith("#") || href.startsWith("http") || href.startsWith("mailto")) return;
+        link.addEventListener("click", function(e) {
+          e.preventDefault();
+          document.body.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+          document.body.style.opacity = "0";
+          document.body.style.transform = "translateY(-12px)";
+          setTimeout(function() {
+            window.location.href = href;
+          }, 300);
+        });
+      });
+    });
+    </script>
     <script>
         // Initialize Lucide icons
         if (typeof lucide !== 'undefined') {

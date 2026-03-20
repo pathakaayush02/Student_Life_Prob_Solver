@@ -156,5 +156,38 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 </script>
+<style>
+body {
+  animation: pageIn 0.4s ease forwards;
+}
+
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  document.querySelectorAll("a[href]").forEach(function(link) {
+    const href = link.getAttribute("href");
+    if (!href || href.startsWith("#") || href.startsWith("http") || href.startsWith("mailto")) return;
+    link.addEventListener("click", function(e) {
+      e.preventDefault();
+      document.body.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+      document.body.style.opacity = "0";
+      document.body.style.transform = "translateY(-12px)";
+      setTimeout(function() {
+        window.location.href = href;
+      }, 300);
+    });
+  });
+});
+</script>
 </body>
 </html>
