@@ -19,6 +19,7 @@
   position: absolute;
   opacity: 0.7;
   animation: float 4s ease-in-out infinite;
+  z-index: 0;
 }
 
 .doodle-1 { top: 10%; left: 8%;   animation-delay: 0s;   font-size: 22px; }
@@ -32,6 +33,20 @@
   0%   { transform: translateY(0px) rotate(0deg);   }
   50%  { transform: translateY(-12px) rotate(8deg); }
   100% { transform: translateY(0px) rotate(0deg);   }
+}
+
+@media (max-width: 768px) {
+  .doodle-1 { top: 5%;  left: 4%;   font-size: 16px; }
+  .doodle-2 { top: 5%;  right: 4%;  font-size: 18px; }
+  .doodle-3 { top: 10%; right: 10%; font-size: 16px; }
+  .doodle-4 { top: 88%; left: 4%;   font-size: 14px; }
+  .doodle-5 { top: 88%; right: 4%;  font-size: 16px; }
+  .doodle-6 { top: 3%;  left: 40%;  font-size: 14px; }
+
+  .doodle-container {
+    pointer-events: none;
+    z-index: 0;
+  }
 }
 
 /* ==========================================================================
@@ -336,20 +351,59 @@ a:hover {
 }
 
 .tool-card {
+  position: relative;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  border-radius: 16px;
   background: linear-gradient(145deg, #FFFFFF 0%, #F8F9FA 100%);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
   padding: var(--spacing-card);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: all var(--transition-slow);
-  position: relative;
+  transition: all 0.3s ease;
   overflow: hidden;
 }
 
+.tool-card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 17px;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    #8B6914 0%,
+    #C4A862 25%,
+    #f5e6b8 50%,
+    #C4A862 75%,
+    #8B6914 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
 .tool-card:hover {
-  transform: translateY(-8px) scale(1.02);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(184, 134, 11, 0.2);
-  border-color: var(--color-metallic-gold);
+  box-shadow: 0 8px 32px rgba(139, 105, 20, 0.2),
+              0 0 0 0.5px rgba(196, 168, 98, 0.3);
+  transform: translateY(-3px);
+  transition: all 0.3s ease;
+}
+
+.tool-card:hover::before {
+  background: linear-gradient(
+    135deg,
+    #5C4400 0%,
+    #8B6914 25%,
+    #C4A862 50%,
+    #8B6914 75%,
+    #5C4400 100%
+  );
+  opacity: 1;
 }
 
 /* ==========================================================================
@@ -517,8 +571,15 @@ a:hover {
   display: flex;
   gap: 1.5rem;
   justify-content: center;
+  position: relative;
+  z-index: 2;
   flex-wrap: wrap;
   animation: slideInUp 0.8s ease-out 0.4s both;
+}
+
+.hero-buttons, .cta-buttons, .btn-explore, .btn-survey {
+  position: relative;
+  z-index: 2;
 }
 
 /* Fun Stats Bar Animation */
@@ -611,26 +672,6 @@ a:hover {
   padding: var(--spacing-section-desktop) 0;
 }
 
-.tool-card {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  padding: var(--spacing-card);
-  box-shadow: var(--shadow-card);
-  transition: all var(--transition-slow);
-  text-decoration: none;
-  color: inherit;
-  display: block;
-}
-
-.tool-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 0 0 2px rgba(180, 140, 0, 0.4), 0 8px 24px rgba(180, 140, 0, 0.12);
-  border-color: rgba(180, 140, 0, 0.5);
-  text-decoration: none;
-  color: inherit;
-  transition: all 0.2s ease;
-}
 
 .tool-icon {
   width: 48px;
