@@ -1,11 +1,12 @@
-const CACHE_NAME = "clutch-v1";
+const CACHE_NAME = "clutch-v4";
 const ASSETS = [
   "/Student_Life_Prob_Solver/",
   "/Student_Life_Prob_Solver/index.html",
   "/Student_Life_Prob_Solver/workspace.html",
   "/Student_Life_Prob_Solver/style.css",
   "/Student_Life_Prob_Solver/app.js",
-  "/Student_Life_Prob_Solver/logo.png"
+  "/Student_Life_Prob_Solver/logo.png",
+  "/Student_Life_Prob_Solver/pwa_logo.jpg"
 ];
 
 self.addEventListener("install", function(event) {
