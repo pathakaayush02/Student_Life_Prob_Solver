@@ -90,25 +90,15 @@ html {
   scroll-behavior: smooth;
 }
 
-
 body {
   font-family: var(--font-family);
   font-size: var(--font-size-body);
   font-weight: var(--font-weight-body);
   line-height: var(--line-height-body);
-  color: #1a1a1a;
-  background: #f5f5f0;
+  color: var(--color-body);
+  background-color: var(--bg-page);
   min-height: 100vh;
-  scroll-behavior: smooth;
-}
-
-p {
-  font-family: var(--font-family);
-  font-size: var(--font-size-body);
-  font-weight: var(--font-weight-body);
-  line-height: var(--line-height-body);
-  color: #4a4a4a;
-  margin-bottom: 1rem;
+  overflow-x: hidden;
 }
 
 /* ==========================================================================
@@ -126,10 +116,10 @@ p {
    ========================================================================== */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-family);
-  font-weight: var(--font-weight-heading);
+  font-weight: var(--font-weight-h2);
   line-height: var(--line-height-heading);
-  color: #1a1a1a;
-  margin-bottom: 0.5rem;
+  color: var(--color-heading);
+  margin-bottom: 1rem;
 }
 
 h1 {
@@ -216,7 +206,7 @@ a:hover {
 }
 
 .btn-secondary {
-  background: var(--bg-card);
+  background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FA 100%);
   color: var(--color-primary);
   border: 2px solid var(--color-metallic-silver);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -257,17 +247,19 @@ a:hover {
   background-size: contain;
   opacity: 0.8;
 }
+
+/* ==========================================================================
    CARDS - Premium Professional Design
    ========================================================================== */
 .card {
-  background: #ffffff;
-  border: 1px solid #e8e0cc;
-  border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(184, 150, 12, 0.08);
-  padding: 2rem;
+  background: linear-gradient(145deg, #FFFFFF 0%, #F8F9FA 100%);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: var(--spacing-card);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all var(--transition-slow);
   position: relative;
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .card::before {
@@ -324,10 +316,6 @@ a:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
 }
 
 .breadcrumb {
@@ -572,13 +560,12 @@ a:hover {
 }
 
 .tool-card {
-  background: linear-gradient(145deg, #FFFFFF 0%, #F8F9FA 100%);
+  background-color: var(--bg-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
   padding: var(--spacing-card);
-  position: relative;
-  overflow: hidden;
-  transition: all var(--transition-base);
+  box-shadow: var(--shadow-card);
+  transition: all var(--transition-slow);
   text-decoration: none;
   color: inherit;
   display: block;
@@ -692,19 +679,16 @@ a:hover {
   display: block;
   font-weight: var(--font-weight-button);
   margin-bottom: 0.5rem;
-  color: #5a4a00;
+  color: var(--color-heading);
 }
 
 .form-input,
-.form-input {
+.form-select {
   width: 100%;
-  padding: 0.75rem 1rem;
-  border: 2px solid var(--color-border);
+  padding: 12px 16px;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-button);
   font-size: var(--font-size-body);
-  font-family: var(--font-family);
-  background: #ffffff;
-  color: #1a1a1a;
   transition: all var(--transition-base);
   min-height: 44px;
 }
@@ -864,32 +848,6 @@ a:hover {
 }
 
 /* ==========================================================================
-   GLOBAL VARIABLES & RESET
-   ========================================================================== */
-:root {
-  --color-primary: #b8960c;
-  --color-secondary: #7a6200;
-  --color-accent: #f0c040;
-  --color-success: #10b981;
-  --color-danger: #ef4444;
-  --color-warning: #f59e0b;
-  --color-heading: #3d3000;
-  --color-text: #4b5563;
-  --color-muted: #6b7280;
-  --color-background: #fefdf9;
-  --color-surface: #ffffff;
-  --color-border: #e5c890;
-  --bg-soft-highlight: #fffef5;
-  --radius-button: 12px;
-  --radius-card: 16px;
-  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
-  --shadow-medium: 0 8px 30px rgba(0, 0, 0, 0.12);
-  --shadow-strong: 0 12px 40px rgba(0, 0, 0, 0.16);
-}
-
-
-
-/* ==========================================================================
    CAREER HELPER CHIPS
    ========================================================================== */
 .chip {
@@ -910,23 +868,6 @@ a:hover {
 .chip:hover {
   background: #fdf3c0;
   box-shadow: 0 0 8px rgba(184, 150, 12, 0.4);
-}
-
-.stats-box, .info-panel {
-  background: #fffbe6;
-  border: 1px solid #e8d88a;
-}
-
-.section-heading, .tool-title {
-  color: #3d3000;
-}
-
-.card-title, h2 {
-  color: #2a2000;
-}
-
-.card {
-  border-left: 3px solid #b8960c;
 }
 
 .chip.selected {
