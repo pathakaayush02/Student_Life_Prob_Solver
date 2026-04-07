@@ -453,12 +453,20 @@ function renderStudyPlanner(container) {
                     
                     const statusBadgeColor = plan.status === 'completed' ? 'success' : 
                                             plan.status === 'in-progress' ? 'primary' : 'muted';
+                    const isCompleted = plan.status === 'completed';
                     
                     div.innerHTML = `
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 1rem;">
+                                <button class="btn btn-ghost" style="padding: 0.5rem; min-width: auto;" 
+                                        onclick="markStudyPlanDone('${plan._id || plan.id}')"
+                                        aria-label="Mark ${plan.title} as completed"
+                                        ${isCompleted ? 'disabled' : ''}>
+                                    <i data-lucide="${isCompleted ? 'check-circle' : 'circle'}" width="20" height="20" 
+                                       style="color: ${isCompleted ? 'var(--color-success)' : 'var(--color-muted)'}"></i>
+                                </button>
                                 <div>
-                                    <div style="font-weight: 600; color: var(--color-heading);">
+                                    <div style="font-weight: 600; color: ${isCompleted ? 'var(--color-muted)' : 'var(--color-heading)'};">
                                         ${plan.title}
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; flex-wrap: wrap;">
@@ -469,6 +477,11 @@ function renderStudyPlanner(container) {
                                     </div>
                                 </div>
                             </div>
+                            <button class="btn btn-ghost" style="color: var(--color-danger);" 
+                                    onclick="deleteStudyPlan('${plan._id || plan.id}')"
+                                    aria-label="Delete ${plan.title}">
+                                <i data-lucide="trash-2" width="16" height="16"></i>
+                            </button>
                         </div>
                     `;
                     taskList.appendChild(div);
@@ -494,6 +507,51 @@ function renderStudyPlanner(container) {
         const currentExp = parseInt(totalExpDisplay.textContent || '0');
         animateCount(totalExpDisplay, isNaN(currentExp) ? 0 : currentExp, totalExp);
         updateLevelUI(totalExp);
+    };
+
+    // Global functions for study plan actions
+    window.deleteStudyPlan = async (id) => {
+        if (!confirm('Are you sure you want to delete this study plan?')) {
+            return;
+        }
+        
+        try {
+            const res = await fetch(`https://student-life-backend-1.onrender.com/api/study-plans/${id}`, {
+                method: "DELETE"
+            });
+            
+            if (!res.ok) {
+                throw new Error('Failed to delete study plan');
+            }
+            
+            // Reload study plans from backend
+            await loadTasks();
+        } catch (error) {
+            console.error('Error deleting study plan:', error);
+            alert('Failed to delete study plan');
+        }
+    };
+
+    window.markStudyPlanDone = async (id) => {
+        try {
+            const res = await fetch(`https://student-life-backend-1.onrender.com/api/study-plans/${id}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ status: "completed" })
+            });
+            
+            if (!res.ok) {
+                throw new Error('Failed to update study plan');
+            }
+            
+            // Reload study plans from backend
+            await loadTasks();
+        } catch (error) {
+            console.error('Error updating study plan:', error);
+            alert('Failed to mark study plan as done');
+        }
     };
 
     resetExpBtn.addEventListener('click', () => {
