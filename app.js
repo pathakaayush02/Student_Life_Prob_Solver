@@ -615,12 +615,34 @@ function renderStudyPlanner(container) {
         e.preventDefault();
         
         const submitButton = form.querySelector('button[type="submit"]');
-        const subjectName = document.getElementById('subject').value;
+        const subjectName = document.getElementById('subject').value.trim();
         const duration = document.getElementById('hours').value;
+        
+        // Validation
+        if (!subjectName) {
+            alert('Please enter a subject name');
+            return;
+        }
+        
+        const targetHours = Number(duration);
+        if (isNaN(targetHours) || targetHours <= 0) {
+            alert('Please enter a valid number of hours');
+            return;
+        }
         
         // Disable button during request
         submitButton.disabled = true;
         submitButton.textContent = 'Adding...';
+        
+        const requestBody = {
+            title: subjectName,
+            subject: subjectName,
+            description: "Added from frontend",
+            targetHours: targetHours,
+            status: "pending"
+        };
+        
+        console.log("Sending:", requestBody);
         
         try {
             const res = await fetch("https://student-life-backend-1.onrender.com/api/study-plans", {
@@ -628,20 +650,15 @@ function renderStudyPlanner(container) {
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({
-                    title: subjectName,
-                    subject: subjectName,
-                    description: "Added from frontend",
-                    targetHours: Number(duration),
-                    status: "pending"
-                })
+                body: JSON.stringify(requestBody)
             });
             
-            if (!res.ok) {
-                throw new Error('Failed to add study plan');
-            }
-            
             const result = await res.json();
+            console.log("Response:", result);
+            
+            if (!res.ok || result.success === false) {
+                throw new Error(result.message || 'Failed to add study plan');
+            }
             
             // Clear form fields
             form.reset();
@@ -651,7 +668,7 @@ function renderStudyPlanner(container) {
             
         } catch (error) {
             console.error('Error adding study plan:', error);
-            alert('Failed to add study plan');
+            alert(error.message || 'Failed to add study plan');
         } finally {
             // Re-enable button
             submitButton.disabled = false;
