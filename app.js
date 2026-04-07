@@ -412,6 +412,8 @@ function renderStudyPlanner(container) {
     const ariaAnnouncer = document.getElementById('ariaAnnouncer');
 
     const API_URL = 'https://student-life-backend-1.onrender.com/api/study-plans';
+    const XP_API_URL = 'https://student-life-backend-1.onrender.com/api/xp';
+    const XP_PER_TASK = 10;
 
     const calculateEarnedExp = (hours) => Math.round(parseFloat(hours) * 5);
 
@@ -502,11 +504,28 @@ function renderStudyPlanner(container) {
             expConversionText.textContent = `Total hours: 0h → 0 EXP possible`;
         }
         
-        // EXP from localStorage (kept for gamification)
-        const totalExp = parseInt(localStorage.getItem('clutch_exp') || '0');
-        const currentExp = parseInt(totalExpDisplay.textContent || '0');
-        animateCount(totalExpDisplay, isNaN(currentExp) ? 0 : currentExp, totalExp);
-        updateLevelUI(totalExp);
+        // Fetch XP from backend
+        await loadXpFromBackend();
+    };
+
+    const loadXpFromBackend = async () => {
+        try {
+            const res = await fetch(XP_API_URL);
+            if (res.ok) {
+                const result = await res.json();
+                const xp = result.xp || 0;
+                const currentExp = parseInt(totalExpDisplay.textContent || '0');
+                animateCount(totalExpDisplay, isNaN(currentExp) ? 0 : currentExp, xp);
+                updateLevelUI(xp);
+            }
+        } catch (error) {
+            console.error('Error loading XP:', error);
+            // Fallback to localStorage if backend fails
+            const localXp = parseInt(localStorage.getItem('clutch_exp') || '0');
+            const currentExp = parseInt(totalExpDisplay.textContent || '0');
+            animateCount(totalExpDisplay, isNaN(currentExp) ? 0 : currentExp, localXp);
+            updateLevelUI(localXp);
+        }
     };
 
     // Global functions for study plan actions
@@ -524,8 +543,9 @@ function renderStudyPlanner(container) {
                 throw new Error('Failed to delete study plan');
             }
             
-            // Reload study plans from backend
+            // Reload study plans and XP from backend
             await loadTasks();
+            await loadXpFromBackend();
         } catch (error) {
             console.error('Error deleting study plan:', error);
             alert('Failed to delete study plan');
@@ -534,6 +554,7 @@ function renderStudyPlanner(container) {
 
     window.markStudyPlanDone = async (id) => {
         try {
+            // First update the study plan status
             const res = await fetch(`https://student-life-backend-1.onrender.com/api/study-plans/${id}`, {
                 method: "PATCH",
                 headers: {
@@ -546,7 +567,23 @@ function renderStudyPlanner(container) {
                 throw new Error('Failed to update study plan');
             }
             
-            // Reload study plans from backend
+            // Add XP to backend
+            try {
+                await fetch(XP_API_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ xp: XP_PER_TASK })
+                });
+            } catch (xpError) {
+                console.error('Error adding XP:', xpError);
+                // Fallback: save to localStorage
+                const currentXp = parseInt(localStorage.getItem('clutch_exp') || '0');
+                localStorage.setItem('clutch_exp', currentXp + XP_PER_TASK);
+            }
+            
+            // Reload study plans and XP from backend
             await loadTasks();
         } catch (error) {
             console.error('Error updating study plan:', error);
@@ -554,10 +591,22 @@ function renderStudyPlanner(container) {
         }
     };
 
-    resetExpBtn.addEventListener('click', () => {
+    resetExpBtn.addEventListener('click', async () => {
         if (confirm('Are you sure you want to reset all EXP? This will not delete your study plans.')) {
+            try {
+                // Try to reset on backend
+                await fetch(XP_API_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ xp: 0, reset: true })
+                });
+            } catch (error) {
+                console.error('Error resetting XP on backend:', error);
+            }
             localStorage.setItem('clutch_exp', 0);
-            loadTasks();
+            await loadTasks();
             announce('EXP has been reset.');
         }
     });
