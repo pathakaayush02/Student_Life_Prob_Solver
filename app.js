@@ -357,7 +357,9 @@ function renderStudyPlanner(container) {
                         <h2>My Study Plan</h2>
                         <div class="badge badge-success" id="totalHoursBadge">0 hours</div>
                     </div>
-                    <div id="taskList"></div>
+                    <div id="taskList">
+                        <p class="text-muted text-center">Loading study plans...</p>
+                    </div>
                 </div>
             </div>
 
@@ -409,6 +411,8 @@ function renderStudyPlanner(container) {
     const resetExpBtn = document.getElementById('resetExpBtn');
     const ariaAnnouncer = document.getElementById('ariaAnnouncer');
 
+    const API_URL = 'https://student-life-backend-1.onrender.com/api/study-plans';
+
     const calculateEarnedExp = (hours) => Math.round(parseFloat(hours) * 5);
 
     const announce = (message) => {
@@ -420,152 +424,132 @@ function renderStudyPlanner(container) {
         flyTo(sourceElement, `${amount > 0 ? '+' : ''}${amount} EXP`, { color: '#fbbf24' });
     };
 
-    const loadTasks = () => {
-        // Migration check from old key if exists
-        let tasks = JSON.parse(localStorage.getItem('sl_study_tasks'));
-        if (!tasks) {
-            const oldTasks = JSON.parse(localStorage.getItem('slps_planner') || '[]');
-            tasks = oldTasks.map(t => ({
-                ...t,
-                completed: false,
-                earnedExp: 0
-            }));
-            localStorage.setItem('sl_study_tasks', JSON.stringify(tasks));
-        }
+    const loadTasks = async () => {
+        try {
+            taskList.innerHTML = '<p class="text-muted text-center">Loading study plans...</p>';
+            
+            const response = await fetch(API_URL);
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch study plans');
+            }
+            
+            const result = await response.json();
+            const studyPlans = Array.isArray(result.data) ? result.data : [];
+            
+            taskList.innerHTML = '';
+            let totalHours = 0;
 
-        const totalExp = parseInt(localStorage.getItem('clutch_exp') || '0');
-        
-        taskList.innerHTML = '';
-        let totalHours = 0;
-
-        if (tasks.length === 0) {
-            taskList.innerHTML = '<p class="text-muted text-center">No study tasks yet. Add your first subject above!</p>';
-        } else {
-            tasks.forEach((task) => {
-                totalHours += parseFloat(task.hours);
-                const div = document.createElement('div');
-                div.className = `card ${task.completed ? 'completed' : ''}`;
-                div.style.marginBottom = '1rem';
-                div.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <button class="btn btn-ghost" style="padding: 0.5rem; min-width: auto;" 
-                                    onclick="toggleTaskCompletion('${task.id}', this)"
-                                    data-task-id="${task.id}"
-                                    aria-label="Mark ${task.subject} as completed">
-                                <i data-lucide="${task.completed ? 'check-circle' : 'circle'}" width="20" height="20" 
-                                   style="color: ${task.completed ? 'var(--color-success)' : 'var(--color-muted)'};"></i>
-                            </button>
-                            <div>
-                                <div style="font-weight: 600; color: ${task.completed ? 'var(--color-muted)' : 'var(--color-heading)'};">
-                                    ${task.subject}
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
-                                    <span class="text-muted">${task.hours} hours</span>
-                                    <span class="badge badge-${task.priority === 'High' ? 'danger' : task.priority === 'Medium' ? 'primary' : 'success'}" 
-                                          style="font-size: 0.75rem;">${task.priority}</span>
-                                    ${task.completed ? `<span class="badge badge-success" style="font-size: 0.75rem;">+${task.earnedExp} EXP</span>` : ''}
+            if (studyPlans.length === 0) {
+                taskList.innerHTML = '<p class="text-muted text-center">No study plans yet</p>';
+                totalHoursBadge.textContent = '0 hours';
+                expConversionText.textContent = `Total hours: 0h → 0 EXP possible`;
+            } else {
+                studyPlans.forEach((plan) => {
+                    totalHours += parseFloat(plan.targetHours || 0);
+                    const div = document.createElement('div');
+                    div.className = 'card';
+                    div.style.marginBottom = '1rem';
+                    
+                    const statusBadgeColor = plan.status === 'completed' ? 'success' : 
+                                            plan.status === 'in-progress' ? 'primary' : 'muted';
+                    
+                    div.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div>
+                                    <div style="font-weight: 600; color: var(--color-heading);">
+                                        ${plan.title}
+                                    </div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; flex-wrap: wrap;">
+                                        <span class="text-muted">${plan.subject}</span>
+                                        <span class="text-muted">•</span>
+                                        <span class="text-muted">${plan.targetHours} hours</span>
+                                        <span class="badge badge-${statusBadgeColor}" style="font-size: 0.75rem; text-transform: capitalize;">${plan.status}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <button class="btn btn-ghost" style="color: var(--color-danger);" 
-                                onclick="deleteStudyTask('${task.id}')"
-                                aria-label="Delete ${task.subject}">
-                            <i data-lucide="trash-2" width="16" height="16"></i>
-                        </button>
-                    </div>
-                `;
-                taskList.appendChild(div);
-            });
-        }
+                    `;
+                    taskList.appendChild(div);
+                });
+                
+                totalHoursBadge.textContent = `${totalHours.toFixed(1)} hours`;
+                expConversionText.textContent = `Total hours: ${totalHours.toFixed(1)}h → ${Math.round(totalHours * 5)} EXP possible`;
+            }
 
-        totalHoursBadge.textContent = `${totalHours.toFixed(1)} hours`;
+            // Re-initialize Lucide icons for new elements
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        } catch (error) {
+            console.error('Error loading study plans:', error);
+            taskList.innerHTML = '<p class="text-muted text-center">Failed to load data</p>';
+            totalHoursBadge.textContent = '0 hours';
+            expConversionText.textContent = `Total hours: 0h → 0 EXP possible`;
+        }
+        
+        // EXP from localStorage (kept for gamification)
+        const totalExp = parseInt(localStorage.getItem('clutch_exp') || '0');
         const currentExp = parseInt(totalExpDisplay.textContent || '0');
         animateCount(totalExpDisplay, isNaN(currentExp) ? 0 : currentExp, totalExp);
-        expConversionText.textContent = `Total hours: ${totalHours.toFixed(1)}h → ${Math.round(totalHours * 5)} EXP possible`;
         updateLevelUI(totalExp);
-        
-        // Re-initialize Lucide icons for new elements
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
-    };
-
-    window.toggleTaskCompletion = (taskId, element) => {
-        const tasks = JSON.parse(localStorage.getItem('sl_study_tasks') || '[]');
-        const taskIndex = tasks.findIndex(t => t.id == taskId);
-        
-        if (taskIndex === -1) return;
-
-        const task = tasks[taskIndex];
-        const wasCompleted = task.completed;
-        task.completed = !wasCompleted;
-        
-        let totalExp = parseInt(localStorage.getItem('clutch_exp') || '0');
-        const expChange = calculateEarnedExp(task.hours);
-
-        if (task.completed) {
-            task.earnedExp = expChange;
-            totalExp += expChange;
-            animateExpGain(expChange, element);
-            announce(`You earned ${expChange} EXP. Total EXP is now ${totalExp}.`);
-        } else {
-            totalExp -= task.earnedExp;
-            animateExpGain(-task.earnedExp, element);
-            announce(`Task marked as incomplete. Total EXP is now ${totalExp}.`);
-            task.earnedExp = 0;
-        }
-
-        localStorage.setItem('sl_study_tasks', JSON.stringify(tasks));
-        localStorage.setItem('clutch_exp', totalExp);
-        loadTasks();
-    };
-
-    window.deleteStudyTask = (taskId) => {
-        const tasks = JSON.parse(localStorage.getItem('sl_study_tasks') || '[]');
-        const taskIndex = tasks.findIndex(t => t.id == taskId);
-        
-        if (taskIndex === -1) return;
-
-        const task = tasks[taskIndex];
-        if (task.completed) {
-            let totalExp = parseInt(localStorage.getItem('clutch_exp') || '0');
-            totalExp -= task.earnedExp;
-            localStorage.setItem('clutch_exp', totalExp);
-        }
-
-        tasks.splice(taskIndex, 1);
-        localStorage.setItem('sl_study_tasks', JSON.stringify(tasks));
-        loadTasks();
     };
 
     resetExpBtn.addEventListener('click', () => {
-        if (confirm('Are you sure you want to reset all EXP? This will not delete your tasks.')) {
-            const tasks = JSON.parse(localStorage.getItem('sl_study_tasks') || '[]');
-            const updatedTasks = tasks.map(t => ({ ...t, completed: false, earnedExp: 0 }));
-            localStorage.setItem('sl_study_tasks', JSON.stringify(updatedTasks));
+        if (confirm('Are you sure you want to reset all EXP? This will not delete your study plans.')) {
             localStorage.setItem('clutch_exp', 0);
             loadTasks();
-            announce('EXP and task completion have been reset.');
+            announce('EXP has been reset.');
         }
     });
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const newTask = {
-            subject: document.getElementById('subject').value,
-            hours: document.getElementById('hours').value,
-            priority: document.getElementById('priority').value,
-            id: Date.now(),
-            completed: false,
-            earnedExp: 0
-        };
-
-        const tasks = JSON.parse(localStorage.getItem('sl_study_tasks') || '[]');
-        tasks.push(newTask);
-        localStorage.setItem('sl_study_tasks', JSON.stringify(tasks));
-        form.reset();
-        loadTasks();
+        
+        const submitButton = form.querySelector('button[type="submit"]');
+        const subjectName = document.getElementById('subject').value;
+        const duration = document.getElementById('hours').value;
+        
+        // Disable button during request
+        submitButton.disabled = true;
+        submitButton.textContent = 'Adding...';
+        
+        try {
+            const res = await fetch("https://student-life-backend-1.onrender.com/api/study-plans", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    title: subjectName,
+                    subject: subjectName,
+                    description: "Added from frontend",
+                    targetHours: Number(duration),
+                    status: "pending"
+                })
+            });
+            
+            if (!res.ok) {
+                throw new Error('Failed to add study plan');
+            }
+            
+            const result = await res.json();
+            
+            // Clear form fields
+            form.reset();
+            
+            // Reload study plans from API
+            await loadTasks();
+            
+        } catch (error) {
+            console.error('Error adding study plan:', error);
+            alert('Failed to add study plan');
+        } finally {
+            // Re-enable button
+            submitButton.disabled = false;
+            submitButton.textContent = 'Add to Plan';
+        }
     });
 
     loadTasks();
@@ -2164,18 +2148,18 @@ function animateCount(element, from, to, duration = 600) {
     requestAnimationFrame(step);
 }
 
-// PWA Service Worker Registration
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", function() {
-    navigator.serviceWorker.register("/Student_Life_Prob_Solver/sw.js")
-      .then(function(reg) {
-        console.log("CLUTCH SW registered:", reg.scope);
-      })
-      .catch(function(err) {
-        console.log("SW registration failed:", err);
-      });
-  });
-}
+// PWA Service Worker Registration - TEMPORARILY DISABLED for local preview
+// if ("serviceWorker" in navigator) {
+//   window.addEventListener("load", function() {
+//     navigator.serviceWorker.register("/Student_Life_Prob_Solver/sw.js")
+//       .then(function(reg) {
+//         console.log("CLUTCH SW registered:", reg.scope);
+//       })
+//       .catch(function(err) {
+//         console.log("SW registration failed:", err);
+//       });
+//   });
+// }
 
 // PWA Install Prompt
 let deferredPrompt = null;
