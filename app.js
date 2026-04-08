@@ -396,7 +396,7 @@ function renderStudyPlanner(container) {
             </aside>
         </div>
         <div style="display:flex; justify-content:flex-end; margin-top:32px; padding-top:16px; border-top:1px solid #e8d88a;">
-          <a href="index.html" class="close-tool-btn">
+          <a href="app.html" class="close-tool-btn">
             Close Tool
           </a>
         </div>
@@ -434,7 +434,8 @@ function renderStudyPlanner(container) {
             taskList.innerHTML = '<p class="text-muted text-center">Loading study plans...</p>';
             
             const response = await fetch(API_URL, {
-                headers: authHeaders
+                headers: authHeaders,
+                cache: 'no-store'
             });
             
             if (!response.ok) {
@@ -519,7 +520,8 @@ function renderStudyPlanner(container) {
 
         try {
             const res = await fetch(XP_API_URL, {
-                headers: authHeaders
+                headers: authHeaders,
+                cache: 'no-store'
             });
             if (res.ok) {
                 const result = await res.json();
@@ -550,7 +552,8 @@ function renderStudyPlanner(container) {
         try {
             const res = await fetch(`https://student-life-backend-1.onrender.com/api/study-plans/${id}`, {
                 method: "DELETE",
-                headers: authHeaders
+                headers: authHeaders,
+                cache: 'no-store'
             });
             
             if (!res.ok) {
@@ -578,6 +581,7 @@ function renderStudyPlanner(container) {
                     ...authHeaders,
                     "Content-Type": "application/json"
                 },
+                cache: 'no-store',
                 body: JSON.stringify({ status: "completed" })
             });
             
@@ -593,6 +597,7 @@ function renderStudyPlanner(container) {
                         ...authHeaders,
                         "Content-Type": "application/json"
                     },
+                    cache: 'no-store',
                     body: JSON.stringify({ xp: XP_PER_TASK })
                 });
             } catch (xpError) {
@@ -622,6 +627,7 @@ function renderStudyPlanner(container) {
                             ...authHeaders,
                             "Content-Type": "application/json"
                         },
+                        cache: 'no-store',
                         body: JSON.stringify({ xp: 0, reset: true })
                     });
                 }
@@ -677,6 +683,7 @@ function renderStudyPlanner(container) {
                     ...authHeaders,
                     "Content-Type": "application/json"
                 },
+                cache: 'no-store',
                 body: JSON.stringify(requestBody)
             });
             
@@ -809,7 +816,7 @@ function renderExpenseTracker(container) {
             </aside>
         </div>
         <div style="display:flex; justify-content:flex-end; margin-top:32px; padding-top:16px; border-top:1px solid #e8d88a;">
-          <a href="index.html" class="close-tool-btn">
+          <a href="app.html" class="close-tool-btn">
             Close Tool
           </a>
         </div>
@@ -1026,7 +1033,7 @@ function renderStressChecker(container) {
             </div>
         </div>
         <div style="display:flex; justify-content:flex-end; margin-top:32px; padding-top:16px; border-top:1px solid #e8d88a;">
-          <a href="index.html" class="close-tool-btn">
+          <a href="app.html" class="close-tool-btn">
             Close Tool
           </a>
         </div>
@@ -1592,7 +1599,7 @@ function renderCareerHelper(container) {
             <div id="career-result" style="display:none; margin-top:24px;"></div>
         </div>
         <div style="display:flex; justify-content:flex-end; margin-top:32px; padding-top:16px; border-top:1px solid #e8d88a;">
-          <a href="index.html" class="close-tool-btn">
+          <a href="app.html" class="close-tool-btn">
             Close Tool
           </a>
         </div>
@@ -2038,7 +2045,7 @@ function renderPomodoroTimer(container) {
             </aside>
         </div>
         <div style="display:flex; justify-content:flex-end; margin-top:32px; padding-top:16px; border-top:1px solid #e8d88a;">
-          <a href="index.html" class="close-tool-btn">
+          <a href="app.html" class="close-tool-btn">
             Close Tool
           </a>
         </div>
@@ -2248,7 +2255,7 @@ function renderClutchAI(container) {
 
         </div>
         <div style="display:flex; justify-content:flex-end; margin-top:32px; padding-top:16px; border-top:1px solid #e8d88a;">
-          <a href="index.html" class="close-tool-btn">
+          <a href="app.html" class="close-tool-btn">
             Close Tool
           </a>
         </div>

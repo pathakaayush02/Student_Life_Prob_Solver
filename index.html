@@ -440,6 +440,19 @@
                 console.log('Response data:', data);
 
                 if (res.ok && data.success && data.token) {
+                    // Clear any stale localStorage data from previous user
+                    const keysToRemove = [
+                        'clutch_exp',
+                        'sl_study_tasks',
+                        'slps_expenses',
+                        'sl_savings_amount',
+                        'sl_savings_points',
+                        'slps_stress',
+                        'slps_career_saved'
+                    ];
+                    keysToRemove.forEach(key => localStorage.removeItem(key));
+                    console.log('Cleared stale data for new user');
+
                     localStorage.setItem('token', data.token);
                     showMessage('Login successful! Redirecting...', 'success');
                     setTimeout(() => window.location.replace('app.html'), 800);

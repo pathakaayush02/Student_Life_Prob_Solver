@@ -42,11 +42,33 @@ self.addEventListener("activate", function(event) {
   self.clients.claim();
 });
 
+// Helper to check if URL is an API call
+function isApiRequest(url) {
+  return url.includes('/api/');
+}
+
 self.addEventListener("fetch", function(event) {
+  const requestUrl = event.request.url;
+
+  // Never cache API requests - always go to network
+  if (isApiRequest(requestUrl)) {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' }).catch(function(error) {
+        console.error('API request failed:', error);
+        // Return a generic error response for API calls
+        return new Response(
+          JSON.stringify({ success: false, message: 'Network error' }),
+          { status: 503, headers: { 'Content-Type': 'application/json' } }
+        );
+      })
+    );
+    return;
+  }
+
   // Network-first strategy for navigation requests (HTML pages)
   if (isNavigationRequest(event.request)) {
     event.respondWith(
-      fetch(event.request).then(function(response) {
+      fetch(event.request, { cache: 'no-store' }).then(function(response) {
         // Update cache with fresh response
         return caches.open(CACHE_NAME).then(function(cache) {
           cache.put(event.request, response.clone());

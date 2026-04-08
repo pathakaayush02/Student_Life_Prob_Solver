@@ -17,19 +17,91 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="CLUTCH">
     <link rel="apple-touch-icon" href="/Student_Life_Prob_Solver/pwa_logo.jpg">
+    <style>
+        /* Auth verification loading state */
+        #auth-checking {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 50%, #E8E8E8 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        #auth-checking.hidden {
+            display: none;
+        }
+        .auth-spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(184, 134, 11, 0.2);
+            border-top-color: #B8860B;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
     <script>
-        // IMMEDIATE AUTH CHECK - runs before anything renders
+        // IMMEDIATE TOKEN CHECK - block rendering if no token
         (function() {
             const token = localStorage.getItem('token');
             if (!token) {
                 window.location.replace('index.html');
+                return;
             }
+
+            // Verify token with backend before showing workspace
+            async function verifyToken() {
+                try {
+                    const res = await fetch('https://student-life-backend-1.onrender.com/api/auth/me', {
+                        headers: {
+                            'Authorization': 'Bearer ' + token
+                        },
+                        cache: 'no-store'
+                    });
+
+                    if (!res.ok) {
+                        localStorage.removeItem('token');
+                        window.location.replace('index.html');
+                        return;
+                    }
+
+                    const data = await res.json();
+                    if (!data.success || !data.user) {
+                        localStorage.removeItem('token');
+                        window.location.replace('index.html');
+                        return;
+                    }
+
+                    // Token valid - hide loading
+                    document.getElementById('auth-checking').classList.add('hidden');
+                    console.log('User verified:', data.user.email);
+
+                } catch (error) {
+                    console.error('Auth verification error:', error);
+                    document.getElementById('auth-checking').classList.add('hidden');
+                }
+            }
+
+            verifyToken();
         })();
     </script>
 </head>
 <body class="bg-page">
+    <!-- Auth verification loading overlay -->
+    <div id="auth-checking">
+        <div class="auth-spinner"></div>
+        <p style="margin-top: 1rem; color: #7F8C8D; font-size: 0.9rem;">Verifying...</p>
+    </div>
+
     <a href="#toolWorkspace" class="skip-link">Skip to main content</a>
-    
+
     <div class="doodle doodle-1"></div>
     <div class="doodle doodle-2"></div>
     <div class="doodle doodle-3"></div>
@@ -194,10 +266,35 @@ body {
 }
 </style>
 <script>
+// Global state management
+window.AppState = {
+    currentUser: null,
+    studyPlans: [],
+    xp: 0,
+    clearAll: function() {
+        this.currentUser = null;
+        this.studyPlans = [];
+        this.xp = 0;
+        // Clear all app-related localStorage except UI preferences
+        const keysToRemove = [
+            'token',
+            'clutch_exp',
+            'sl_study_tasks',
+            'slps_expenses',
+            'sl_savings_amount',
+            'sl_savings_points',
+            'slps_stress',
+            'slps_career_saved'
+        ];
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        console.log('All user state cleared');
+    }
+};
+
 // Logout function
 function logout() {
     if (confirm('Are you sure you want to logout?')) {
-        localStorage.removeItem('token');
+        window.AppState.clearAll();
         window.location.replace('index.html');
     }
 }
