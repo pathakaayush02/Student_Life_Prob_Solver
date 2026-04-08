@@ -351,6 +351,14 @@ function renderStudyPlanner(container) {
                         <button type="submit" class="btn btn-primary">Add to Plan</button>
                     </form>
                 </div>
+
+                <!-- Temporary Test Signup Button -->
+                <div class="card" style="background: var(--bg-soft-highlight); border: 1px dashed var(--color-muted);">
+                    <h3 style="font-size: 0.9rem; color: var(--color-muted);">Backend Test</h3>
+                    <button type="button" onclick="testSignup()" class="btn btn-ghost" style="font-size: 0.85rem;">
+                        Test Signup
+                    </button>
+                </div>
                 
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
@@ -677,6 +685,30 @@ function renderStudyPlanner(container) {
     });
 
     loadTasks();
+
+    // Temporary test signup function
+    window.testSignup = async function() {
+        try {
+            const res = await fetch("https://student-life-backend-1.onrender.com/api/auth/signup", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email: "test@gmail.com",
+                    password: "123456"
+                })
+            });
+
+            const data = await res.json();
+            console.log("Signup Response:", data);
+            alert(JSON.stringify(data));
+
+        } catch (error) {
+            console.error(error);
+            alert("Signup failed");
+        }
+    };
 }
 
 
