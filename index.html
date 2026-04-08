@@ -454,8 +454,8 @@
                     console.log('Cleared stale data for new user');
 
                     localStorage.setItem('token', data.token);
-                    showMessage('Login successful! Redirecting...', 'success');
-                    setTimeout(() => window.location.replace('app.html'), 800);
+                    console.log('Login successful, redirecting immediately...');
+                    window.location.replace('app.html');
                 } else {
                     showMessage(data.message || 'Login failed. Please check your credentials.', 'error');
                 }

@@ -48,7 +48,7 @@
         }
     </style>
     <script>
-        // IMMEDIATE TOKEN CHECK - block rendering if no token
+        // IMMEDIATE TOKEN CHECK - redirect if no token, otherwise show workspace immediately
         (function() {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -56,40 +56,64 @@
                 return;
             }
 
-            // Verify token with backend before showing workspace
+            // Show workspace immediately - don't block on API call
+            document.addEventListener('DOMContentLoaded', function() {
+                document.getElementById('auth-checking').classList.add('hidden');
+            });
+
+            // Background token verification with timeout
             async function verifyToken() {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
                 try {
+                    console.log('Verifying token with /api/auth/me...');
                     const res = await fetch('https://student-life-backend-1.onrender.com/api/auth/me', {
+                        method: 'GET',
                         headers: {
-                            'Authorization': 'Bearer ' + token
+                            'Authorization': 'Bearer ' + token,
+                            'Content-Type': 'application/json'
                         },
-                        cache: 'no-store'
+                        cache: 'no-store',
+                        signal: controller.signal
                     });
 
+                    clearTimeout(timeoutId);
+                    console.log('Auth verification response status:', res.status);
+
                     if (!res.ok) {
+                        console.error('Token verification failed, status:', res.status);
                         localStorage.removeItem('token');
                         window.location.replace('index.html');
                         return;
                     }
 
                     const data = await res.json();
+                    console.log('Auth verification response data:', data);
+
                     if (!data.success || !data.user) {
+                        console.error('Invalid user data from /api/auth/me');
                         localStorage.removeItem('token');
                         window.location.replace('index.html');
                         return;
                     }
 
-                    // Token valid - hide loading
-                    document.getElementById('auth-checking').classList.add('hidden');
                     console.log('User verified:', data.user.email);
 
                 } catch (error) {
-                    console.error('Auth verification error:', error);
-                    document.getElementById('auth-checking').classList.add('hidden');
+                    clearTimeout(timeoutId);
+                    if (error.name === 'AbortError') {
+                        console.error('Auth verification timeout after 10s');
+                    } else {
+                        console.error('Auth verification error:', error.message);
+                    }
+                    // On network/timeout error, still allow workspace use
+                    // The next API call will fail if token is truly invalid
                 }
             }
 
-            verifyToken();
+            // Run verification in background - don't block page render
+            setTimeout(verifyToken, 100);
         })();
     </script>
 </head>
