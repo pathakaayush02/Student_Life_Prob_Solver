@@ -353,12 +353,9 @@ function renderStudyPlanner(container) {
                 </div>
 
                 <!-- Temporary Test Signup Button -->
-                <div class="card" style="background: var(--bg-soft-highlight); border: 1px dashed var(--color-muted);">
-                    <h3 style="font-size: 0.9rem; color: var(--color-muted);">Backend Test</h3>
-                    <button type="button" onclick="testSignup()" class="btn btn-ghost" style="font-size: 0.85rem;">
-                        Test Signup
-                    </button>
-                </div>
+                <button onclick="testSignup()" style="margin-top:10px;padding:10px 15px;background:#4CAF50;color:white;border:none;border-radius:5px;cursor:pointer;">
+                    Test Signup
+                </button>
                 
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
