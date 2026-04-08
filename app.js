@@ -15,21 +15,10 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Check authentication (skip auth check on auth page itself)
-    const isAuthPage = window.location.pathname.includes('auth.html');
-    if (!isAuthPage) {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            window.location.href = 'auth.html';
-            return;
-        }
-    }
-
     // Initialize core components
     initNavigation();
     initFeedbackScroll();
     initGlobalAnimations();
-    initLogoutButton();
 
     // Check if we are on the workspace page and initialize the requested tool
     if (document.getElementById('toolWorkspace')) {
@@ -75,49 +64,6 @@ function initNavigation() {
             }, 180);
         });
     });
-}
-
-/* -------------------------------------------------------------------------- */
-/*                               Logout Button                                */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Adds logout button to the navigation
- */
-function initLogoutButton() {
-    // Add logout button to top-nav
-    const breadcrumb = document.querySelector('.breadcrumb');
-    if (breadcrumb) {
-        const logoutBtn = document.createElement('button');
-        logoutBtn.className = 'btn btn-ghost';
-        logoutBtn.style.cssText = 'padding: 0.5rem 1rem; font-size: 0.85rem; margin-left: auto;';
-        logoutBtn.innerHTML = '<i data-lucide="log-out" width="16" height="16"></i> Logout';
-        logoutBtn.onclick = logout;
-
-        // Find or create nav content container
-        const navContent = breadcrumb.closest('.nav-content') || breadcrumb.parentElement;
-        if (navContent) {
-            navContent.style.display = 'flex';
-            navContent.style.alignItems = 'center';
-            navContent.style.justifyContent = 'space-between';
-            navContent.appendChild(logoutBtn);
-
-            // Re-initialize Lucide icons
-            if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
-            }
-        }
-    }
-}
-
-/**
- * Handles logout - clears token and redirects to auth page
- */
-function logout() {
-    if (confirm('Are you sure you want to logout?')) {
-        localStorage.removeItem('token');
-        window.location.href = 'auth.html';
-    }
 }
 
 /* -------------------------------------------------------------------------- */

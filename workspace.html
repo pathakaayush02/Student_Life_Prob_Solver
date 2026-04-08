@@ -17,6 +17,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="CLUTCH">
     <link rel="apple-touch-icon" href="/Student_Life_Prob_Solver/pwa_logo.jpg">
+    <script>
+        // IMMEDIATE AUTH CHECK - runs before anything renders
+        (function() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.replace('index.html');
+            }
+        })();
+    </script>
 </head>
 <body class="bg-page">
     <a href="#toolWorkspace" class="skip-link">Skip to main content</a>
@@ -27,13 +36,18 @@
     
     <nav class="top-nav">
         <div class="container">
-            <div class="nav-content">
+            <div class="nav-content" style="display:flex; justify-content:space-between; align-items:center;">
                 <div class="breadcrumb" id="breadcrumb">
-                    <a href="index.html" class="breadcrumb-item">Home</a>
+                    <a href="app.html" class="breadcrumb-item">Home</a>
                     <span class="breadcrumb-separator">></span>
                     <span class="breadcrumb-item active" id="toolNameBreadcrumb">Tool</span>
                 </div>
-                <a href="index.html" class="back-link">← Back to Home</a>
+                <div style="display:flex; gap:1rem; align-items:center;">
+                    <a href="app.html" class="back-link">← Back to Home</a>
+                    <button onclick="logout()" class="btn btn-ghost" style="padding:0.5rem 1rem; font-size:0.85rem;">
+                        <i data-lucide="log-out" width="16" height="16"></i> Logout
+                    </button>
+                </div>
             </div>
         </div>
     </nav>
@@ -180,6 +194,14 @@ body {
 }
 </style>
 <script>
+// Logout function
+function logout() {
+    if (confirm('Are you sure you want to logout?')) {
+        localStorage.removeItem('token');
+        window.location.replace('index.html');
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function() {
   document.querySelectorAll("a[href]").forEach(function(link) {
     const href = link.getAttribute("href");

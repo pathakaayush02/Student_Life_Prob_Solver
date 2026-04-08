@@ -4,7 +4,7 @@
     <link rel="icon" type="image/jpeg" href="/Student_Life_Prob_Solver/pwa_logo.jpg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Life Problem Solver</title>
+    <title>Login | Student Life Problem Solver</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,209 +17,468 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="CLUTCH">
     <link rel="apple-touch-icon" href="/Student_Life_Prob_Solver/pwa_logo.jpg">
-</head>
-<body class="bg-page">
-    <a href="#main-content" class="skip-link">Skip to main content</a>
-    
-    <div id="install-banner" style="display:none !important; position:fixed; bottom:24px; right:24px; background:linear-gradient(135deg,#8B6914,#5C4400); color:white; padding:14px 20px; border-radius:14px; box-shadow:0 8px 24px rgba(139,105,20,0.4); z-index:9999; max-width:280px; font-size:14px;">
-      <div style="font-weight:700; margin-bottom:6px;">📲 Install CLUTCH</div>
-      <div style="opacity:0.9; font-size:13px; margin-bottom:12px;">Add to your home screen for quick access anytime!</div>
-      <div style="display:flex; gap:10px;">
-        <button id="install-btn" style="background:white; color:#5C4400; border:none; padding:8px 16px; border-radius:8px; font-weight:700; cursor:pointer; font-size:13px;">
-          Install
-        </button>
-        <button id="install-dismiss" style="background:rgba(255,255,255,0.2); color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:13px;">
-          Not now
-        </button>
-      </div>
-    </div>
-    
-    <div class="doodle doodle-1"></div>
-    <div class="doodle doodle-2"></div>
-    <div class="doodle doodle-3"></div>
-    
-    <nav class="top-nav">
-        <div class="container">
-            <div class="breadcrumb" id="breadcrumb">
-                <span class="breadcrumb-item active">Home</span>
-            </div>
-        </div>
-    </nav>
-
-    <header class="hero">
-        <div class="container hero-content">
-            <div class="doodle-container">
-              <span class="doodle doodle-1">⭐</span>
-              <span class="doodle doodle-2">✨</span>
-              <span class="doodle doodle-3">🚀</span>
-              <span class="doodle doodle-4">💡</span>
-              <span class="doodle doodle-5">📚</span>
-              <span class="doodle doodle-6">🎯</span>
-            </div>
-            <div class="logo-container">
-                <img src="logo.png" alt="Student Life Problem Solver Logo" class="logo">
-            </div>
-            <div class="hero-doodle"></div>
-            <h1>Your Student Life, <span class="text-primary">Sorted.</span></h1>
-            <p class="hero-subtitle">Plan smarter. Spend wisely. Stay calm. Build your future.</p>
-            <div class="hero-actions">
-                <div class="hero-buttons">
-                  <a href="#tools" class="btn-explore">Explore Tools</a>
-                  <a href="https://docs.google.com/forms/d/e/1FAIpQLSe6nYD_lLoes6Zy4NjtTU-vK3_RiAi3dzfyId7WUJ3dbGVVJg/viewform?usp=dialog" target="_blank" class="btn-survey">Take the Survey</a>
-                  <button id="pwa-install-btn" onclick="installPWA()" style="display:none;">
-                    📲 Download App
-                  </button>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <section class="stats-bar">
-        <div class="container">
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <i data-lucide="zap" class="stat-icon" width="24" height="24"></i>
-                    <span class="stat-text">6 Powerful Tools</span>
-                </div>
-                <div class="stat-item">
-                    <i data-lucide="users" class="stat-icon" width="24" height="24"></i>
-                    <span class="stat-text">Built for Students</span>
-                </div>
-                <div class="stat-item">
-                    <i data-lucide="gift" class="stat-icon" width="24" height="24"></i>
-                    <span class="stat-text">Free Forever</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <main id="main" class="container">
-        <section id="tools" class="tool-section">
-            <h1 class="text-center">Everything You Need in <span class="text-accent">One Place</span></h1>
-            <div class="tool-grid">
-                <div class="tool-card" aria-label="Study Planner">
-                    <span class="card-corner-accent">⊕</span>
-                    <div class="card-doodle"></div>
-                    <div class="tool-icon">
-                        <i data-lucide="book-open" width="24" height="24"></i>
-                    </div>
-                    <h2>Study Planner</h2>
-                    <p>Organize subjects, set goals, and track every study hour. Exams won't catch you off guard.</p>
-                    <a href="workspace.html?tool=study" class="btn btn-primary open-tool-btn">Open Tool</a>
-                </div>
-                
-                <div class="tool-card" aria-label="Expense Tracker">
-                    <span class="card-corner-accent">⊕</span>
-                    <div class="card-doodle"></div>
-                    <div class="tool-icon">
-                        <i data-lucide="wallet" width="24" height="24"></i>
-                    </div>
-                    <h2>Expense Tracker</h2>
-                    <p>Log spending, set a monthly budget, and finally know where your money goes.</p>
-                    <a href="workspace.html?tool=expense" class="btn btn-primary open-tool-btn">Open Tool</a>
-                </div>
-                
-                <div class="tool-card" aria-label="Stress Checker">
-                    <span class="card-corner-accent">⊕</span>
-                    <div class="card-doodle"></div>
-                    <div class="tool-icon">
-                        <i data-lucide="heart-pulse" width="24" height="24"></i>
-                    </div>
-                    <h2>Stress Checker</h2>
-                    <p>Measure your stress levels and get actionable tips to stay balanced.</p>
-                    <a href="workspace.html?tool=stress" class="btn btn-primary open-tool-btn">Open Tool</a>
-                </div>
-                
-                <div class="tool-card" aria-label="Career Helper">
-                    <span class="card-corner-accent">⊕</span>
-                    <div class="card-doodle"></div>
-                    <div class="tool-icon">
-                        <i data-lucide="briefcase" width="24" height="24"></i>
-                    </div>
-                    <h2>Career Helper</h2>
-                    <p>Discover career paths that match your interests and skills before you have to decide.</p>
-                    <a href="workspace.html?tool=career" class="btn btn-primary open-tool-btn">Open Tool</a>
-                </div>
-                
-                <div class="tool-card" aria-label="Focus Timer">
-                    <span class="card-corner-accent">⊕</span>
-                    <div class="card-doodle"></div>
-                    <div class="tool-icon">
-                        <i data-lucide="timer" width="24" height="24"></i>
-                    </div>
-                    <h2>Focus Timer</h2>
-                    <p>Use Pomodoro intervals to study with full focus, earn EXP, and build a real productivity streak.</p>
-                    <a href="workspace.html?tool=pomodoro" class="btn btn-primary open-tool-btn">Open Tool</a>
-                </div>
-                
-                <div class="tool-card" aria-label="CLUTCH AI">
-                    <span class="card-corner-accent">⊕</span>
-                    <div class="card-doodle"></div>
-                    <div class="tool-icon">
-                        <i data-lucide="message-circle" width="24" height="24"></i>
-                    </div>
-                    <h2>CLUTCH AI</h2>
-                    <p>Feeling overwhelmed? Talk to CLUTCH AI — it listens, understands your emotions, and lifts your mood.</p>
-                    <a href="workspace.html?tool=clutchai" class="btn btn-primary open-tool-btn">Open Tool</a>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <footer class="main-footer">
-        <div class="container">
-            <div class="footer-links-box">
-                <a href="https://docs.google.com/forms/d/e/1FAIpQLSd9VF4FiCjKlkKU8ktZ4zb5EFn6d158yx3F82NLGf09Ohgd2g/viewform?usp=dialog" 
-                   target="_blank" 
-                   rel="noopener">Feedback</a>
-            </div>
-            <div class="footer-links-box">
-                <a href="https://docs.google.com/forms/d/e/1FAIpQLSe6nYD_lLoes6Zy4NjtTU-vK3_RiAi3dzfyId7WUJ3dbGVVJg/viewform?usp=dialog" 
-                   target="_blank" 
-                   rel="noopener">Take Survey</a>
-            </div>
-            <p>&copy; 2026 Student Life Problem Solver</p>
-        </div>
-    </footer>
-
-    <script src="app.js"></script>
-    <style>
-    body {
-      animation: pageIn 0.4s ease forwards;
-    }
-
-    @keyframes pageIn {
-      from {
-        opacity: 0;
-        transform: translateY(16px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    </style>
     <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      document.querySelectorAll("a[href]").forEach(function(link) {
-        const href = link.getAttribute("href");
-        if (!href || href.startsWith("#") || href.startsWith("http") || href.startsWith("mailto")) return;
-        link.addEventListener("click", function(e) {
-          e.preventDefault();
-          document.body.style.transition = "opacity 0.3s ease, transform 0.3s ease";
-          document.body.style.opacity = "0";
-          document.body.style.transform = "translateY(-12px)";
-          setTimeout(function() {
-            window.location.href = href;
-          }, 300);
-        });
-      });
-    });
+        // Immediate auth check - if logged in, go to app
+        (function() {
+            const token = localStorage.getItem('token');
+            if (token) {
+                window.location.replace('app.html');
+            }
+        })();
     </script>
+    <style>
+        /* Auth Page Styles - Matching main theme */
+        .auth-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            background: linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 50%, #E8E8E8 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-page::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.05) 0%, transparent 70%);
+            animation: rotate 30s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .auth-container {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .auth-card {
+            background: linear-gradient(145deg, #FFFFFF 0%, #F8F9FA 100%);
+            border: 1px solid var(--color-border, #ECF0F1);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.08), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .auth-card:hover::before {
+            left: 100%;
+        }
+
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-logo img {
+            max-width: 80px;
+            height: auto;
+            border: 3px solid #FFD700;
+            border-radius: 50%;
+            box-shadow: 0 4px 16px rgba(255, 215, 0, 0.3);
+            background: linear-gradient(145deg, #FFFFFF 0%, #F8F9FA 100%);
+            padding: 4px;
+        }
+
+        .auth-title {
+            text-align: center;
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #2C3E50;
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-subtitle {
+            text-align: center;
+            color: #7F8C8D;
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            background: #F8F9FA;
+            padding: 0.375rem;
+            border-radius: 12px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            background: transparent;
+            color: #7F8C8D;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .auth-tab.active {
+            background: white;
+            color: #2C3E50;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .auth-tab:hover:not(.active) {
+            color: #34495E;
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #2C3E50;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+            border: 2px solid #ECF0F1;
+            border-radius: 10px;
+            background: white;
+            color: #34495E;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #B8860B;
+            box-shadow: 0 0 0 3px rgba(184, 134, 11, 0.15);
+        }
+
+        .form-input::placeholder {
+            color: #7F8C8D;
+        }
+
+        .auth-submit {
+            width: 100%;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            background: linear-gradient(135deg, #2C3E50 0%, #B8860B 100%);
+            color: white;
+            font-size: 1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-height: 52px;
+        }
+
+        .auth-submit::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .auth-submit:hover::before {
+            left: 100%;
+        }
+
+        .auth-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(44, 62, 80, 0.35);
+        }
+
+        .auth-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .auth-submit.loading {
+            color: transparent;
+        }
+
+        .auth-submit.loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .auth-message {
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .auth-message.show {
+            display: block;
+        }
+
+        .auth-message.success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .auth-message.error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Doodles */
+        .auth-doodle {
+            position: absolute;
+            font-size: 24px;
+            opacity: 0.4;
+            animation: float 4s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        .auth-doodle-1 { top: 15%; left: 10%; animation-delay: 0s; }
+        .auth-doodle-2 { top: 20%; right: 10%; animation-delay: 1s; }
+        .auth-doodle-3 { bottom: 20%; left: 8%; animation-delay: 2s; }
+        .auth-doodle-4 { bottom: 15%; right: 12%; animation-delay: 1.5s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(8deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .auth-page {
+                padding: 1rem;
+                align-items: flex-start;
+                padding-top: 3rem;
+            }
+
+            .auth-card {
+                padding: 1.75rem;
+            }
+
+            .auth-title {
+                font-size: 1.5rem;
+            }
+
+            .auth-logo img {
+                max-width: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-page">
+        <span class="auth-doodle auth-doodle-1">⭐</span>
+        <span class="auth-doodle auth-doodle-2">✨</span>
+        <span class="auth-doodle auth-doodle-3">🚀</span>
+        <span class="auth-doodle auth-doodle-4">💡</span>
+
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="auth-logo">
+                    <img src="logo.png" alt="CLUTCH Logo">
+                </div>
+
+                <h1 class="auth-title">Welcome Back</h1>
+                <p class="auth-subtitle">Sign in to access your student toolkit</p>
+
+                <div id="authMessage" class="auth-message"></div>
+
+                <div class="auth-tabs">
+                    <button class="auth-tab active" onclick="switchTab('login')">Login</button>
+                    <button class="auth-tab" onclick="switchTab('signup')">Sign Up</button>
+                </div>
+
+                <form id="loginForm" class="auth-form active" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label class="form-label" for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" class="form-input" placeholder="you@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password" required>
+                    </div>
+                    <button type="submit" class="auth-submit" id="loginBtn">Sign In</button>
+                </form>
+
+                <form id="signupForm" class="auth-form" onsubmit="handleSignup(event)">
+                    <div class="form-group">
+                        <label class="form-label" for="signupEmail">Email</label>
+                        <input type="email" id="signupEmail" class="form-input" placeholder="you@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="signupPassword">Password</label>
+                        <input type="password" id="signupPassword" class="form-input" placeholder="Create a password (min 6 chars)" required minlength="6">
+                    </div>
+                    <button type="submit" class="auth-submit" id="signupBtn">Create Account</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Initialize Lucide icons
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
+        function switchTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+
+            if (tab === 'login') {
+                document.querySelectorAll('.auth-tab')[0].classList.add('active');
+                document.getElementById('loginForm').classList.add('active');
+                document.querySelector('.auth-title').textContent = 'Welcome Back';
+                document.querySelector('.auth-subtitle').textContent = 'Sign in to access your student toolkit';
+            } else {
+                document.querySelectorAll('.auth-tab')[1].classList.add('active');
+                document.getElementById('signupForm').classList.add('active');
+                document.querySelector('.auth-title').textContent = 'Create Account';
+                document.querySelector('.auth-subtitle').textContent = 'Join CLUTCH and start organizing your student life';
+            }
+            hideMessage();
+        }
+
+        function showMessage(message, type) {
+            const msgEl = document.getElementById('authMessage');
+            msgEl.textContent = message;
+            msgEl.className = `auth-message ${type} show`;
+        }
+
+        function hideMessage() {
+            document.getElementById('authMessage').classList.remove('show');
+        }
+
+        function setLoading(btnId, loading) {
+            const btn = document.getElementById(btnId);
+            btn.disabled = loading;
+            btn.classList.toggle('loading', loading);
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            hideMessage();
+            setLoading('loginBtn', true);
+
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const res = await fetch('https://student-life-backend-1.onrender.com/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.success && data.token) {
+                    localStorage.setItem('token', data.token);
+                    showMessage('Login successful! Redirecting...', 'success');
+                    setTimeout(() => window.location.replace('app.html'), 800);
+                } else {
+                    showMessage(data.message || 'Login failed. Please check your credentials.', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error. Please try again.', 'error');
+            } finally {
+                setLoading('loginBtn', false);
+            }
+        }
+
+        async function handleSignup(e) {
+            e.preventDefault();
+            hideMessage();
+            setLoading('signupBtn', true);
+
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+
+            try {
+                const res = await fetch('https://student-life-backend-1.onrender.com/api/auth/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    showMessage('Account created! Please sign in.', 'success');
+                    setTimeout(() => {
+                        switchTab('login');
+                        document.getElementById('loginEmail').value = email;
+                    }, 1000);
+                } else {
+                    showMessage(data.message || 'Signup failed. Please try again.', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error. Please try again.', 'error');
+            } finally {
+                setLoading('signupBtn', false);
+            }
         }
     </script>
 </body>
