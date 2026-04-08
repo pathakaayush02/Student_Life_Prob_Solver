@@ -352,10 +352,15 @@ function renderStudyPlanner(container) {
                     </form>
                 </div>
 
-                <!-- Temporary Test Signup Button -->
-                <button onclick="testSignup()" style="margin-top:10px;padding:10px 15px;background:#4CAF50;color:white;border:none;border-radius:5px;cursor:pointer;">
-                    Test Signup
-                </button>
+                <!-- Temporary Auth Buttons -->
+                <div style="margin-top:10px;">
+                    <button onclick="testSignup()" style="padding:10px 15px;background:#2196F3;color:white;border:none;border-radius:5px;cursor:pointer;margin-right:10px;">
+                        Test Signup
+                    </button>
+                    <button onclick="testLogin()" style="padding:10px 15px;background:#4CAF50;color:white;border:none;border-radius:5px;cursor:pointer;">
+                        Test Login
+                    </button>
+                </div>
                 
                 <div class="card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
@@ -432,10 +437,15 @@ function renderStudyPlanner(container) {
     };
 
     const loadTasks = async () => {
+        const authHeaders = getAuthHeaders();
+        if (!authHeaders) return;
+
         try {
             taskList.innerHTML = '<p class="text-muted text-center">Loading study plans...</p>';
             
-            const response = await fetch(API_URL);
+            const response = await fetch(API_URL, {
+                headers: authHeaders
+            });
             
             if (!response.ok) {
                 throw new Error('Failed to fetch study plans');
@@ -514,8 +524,13 @@ function renderStudyPlanner(container) {
     };
 
     const loadXpFromBackend = async () => {
+        const authHeaders = getAuthHeaders();
+        if (!authHeaders) return;
+
         try {
-            const res = await fetch(XP_API_URL);
+            const res = await fetch(XP_API_URL, {
+                headers: authHeaders
+            });
             if (res.ok) {
                 const result = await res.json();
                 const xp = result.xp || 0;
@@ -539,9 +554,13 @@ function renderStudyPlanner(container) {
             return;
         }
         
+        const authHeaders = getAuthHeaders();
+        if (!authHeaders) return;
+        
         try {
             const res = await fetch(`https://student-life-backend-1.onrender.com/api/study-plans/${id}`, {
-                method: "DELETE"
+                method: "DELETE",
+                headers: authHeaders
             });
             
             if (!res.ok) {
@@ -558,11 +577,15 @@ function renderStudyPlanner(container) {
     };
 
     window.markStudyPlanDone = async (id) => {
+        const authHeaders = getAuthHeaders();
+        if (!authHeaders) return;
+
         try {
             // First update the study plan status
             const res = await fetch(`https://student-life-backend-1.onrender.com/api/study-plans/${id}`, {
                 method: "PATCH",
                 headers: {
+                    ...authHeaders,
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({ status: "completed" })
@@ -577,6 +600,7 @@ function renderStudyPlanner(container) {
                 await fetch(XP_API_URL, {
                     method: "POST",
                     headers: {
+                        ...authHeaders,
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({ xp: XP_PER_TASK })
@@ -600,13 +624,17 @@ function renderStudyPlanner(container) {
         if (confirm('Are you sure you want to reset all EXP? This will not delete your study plans.')) {
             try {
                 // Try to reset on backend
-                await fetch(XP_API_URL, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ xp: 0, reset: true })
-                });
+                const authHeaders = getAuthHeaders();
+                if (authHeaders) {
+                    await fetch(XP_API_URL, {
+                        method: "POST",
+                        headers: {
+                            ...authHeaders,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ xp: 0, reset: true })
+                    });
+                }
             } catch (error) {
                 console.error('Error resetting XP on backend:', error);
             }
@@ -647,12 +675,16 @@ function renderStudyPlanner(container) {
             status: "pending"
         };
         
+        const authHeaders = getAuthHeaders();
+        if (!authHeaders) return;
+
         console.log("Sending:", requestBody);
         
         try {
             const res = await fetch("https://student-life-backend-1.onrender.com/api/study-plans", {
                 method: "POST",
                 headers: {
+                    ...authHeaders,
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify(requestBody)
@@ -705,6 +737,49 @@ function renderStudyPlanner(container) {
             console.error(error);
             alert("Signup failed");
         }
+    };
+
+    // Temporary test login function - stores JWT token
+    window.testLogin = async function() {
+        try {
+            const res = await fetch("https://student-life-backend-1.onrender.com/api/auth/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email: "test@gmail.com",
+                    password: "123456"
+                })
+            });
+
+            const data = await res.json();
+            console.log("Login Response:", data);
+
+            if (data.success && data.token) {
+                localStorage.setItem("token", data.token);
+                alert("Login successful! Token stored.");
+                await loadTasks();
+            } else {
+                alert("Login failed: " + (data.message || "Unknown error"));
+            }
+
+        } catch (error) {
+            console.error(error);
+            alert("Login failed");
+        }
+    };
+
+    // Helper to get auth headers
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            alert("Please login");
+            return null;
+        }
+        return {
+            "Authorization": `Bearer ${token}`
+        };
     };
 }
 
