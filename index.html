@@ -425,6 +425,8 @@
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
 
+            console.log('Attempting login for:', email);
+
             try {
                 const res = await fetch('https://student-life-backend-1.onrender.com/api/auth/login', {
                     method: 'POST',
@@ -432,7 +434,10 @@
                     body: JSON.stringify({ email, password })
                 });
 
+                console.log('Response status:', res.status);
+
                 const data = await res.json();
+                console.log('Response data:', data);
 
                 if (res.ok && data.success && data.token) {
                     localStorage.setItem('token', data.token);
@@ -442,6 +447,8 @@
                     showMessage(data.message || 'Login failed. Please check your credentials.', 'error');
                 }
             } catch (error) {
+                console.error('Login error:', error);
+                alert('Login failed: ' + error.message);
                 showMessage('Network error. Please try again.', 'error');
             } finally {
                 setLoading('loginBtn', false);
@@ -456,6 +463,8 @@
             const email = document.getElementById('signupEmail').value.trim();
             const password = document.getElementById('signupPassword').value;
 
+            console.log('Attempting signup for:', email);
+
             try {
                 const res = await fetch('https://student-life-backend-1.onrender.com/api/auth/signup', {
                     method: 'POST',
@@ -463,7 +472,10 @@
                     body: JSON.stringify({ email, password })
                 });
 
+                console.log('Response status:', res.status);
+
                 const data = await res.json();
+                console.log('Response data:', data);
 
                 if (res.ok && data.success) {
                     showMessage('Account created! Please sign in.', 'success');
@@ -475,6 +487,8 @@
                     showMessage(data.message || 'Signup failed. Please try again.', 'error');
                 }
             } catch (error) {
+                console.error('Signup error:', error);
+                alert('Signup failed: ' + error.message);
                 showMessage('Network error. Please try again.', 'error');
             } finally {
                 setLoading('signupBtn', false);
