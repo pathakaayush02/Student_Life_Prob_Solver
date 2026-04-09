@@ -931,8 +931,11 @@ function renderExpenseTracker(container) {
                 return;
             }
 
-            const expenses = expRes.ok ? await expRes.json() : [];
-            const settings = settingsRes.ok ? await settingsRes.json() : {};
+            const expResult = expRes.ok ? await expRes.json() : { data: [] };
+            const settingsResult = settingsRes.ok ? await settingsRes.json() : { data: {} };
+
+            const expenses = Array.isArray(expResult) ? expResult : expResult.data || [];
+            const settings = settingsResult.data || settingsResult || {};
 
             list.innerHTML = '';
             let total = 0;
