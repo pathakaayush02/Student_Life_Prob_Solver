@@ -2180,6 +2180,48 @@ function renderPomodoroTimer(container) {
         return;
     }
 
+    // Request notification permission
+    if ("Notification" in window) {
+        Notification.requestPermission();
+    }
+
+    // Create simple beep sound using AudioContext
+    const playAlarmSound = () => {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            
+            oscillator.start(audioCtx.currentTime);
+            oscillator.stop(audioCtx.currentTime + 0.5);
+            
+            // Second beep
+            setTimeout(() => {
+                const osc2 = audioCtx.createOscillator();
+                const gain2 = audioCtx.createGain();
+                osc2.connect(gain2);
+                gain2.connect(audioCtx.destination);
+                osc2.frequency.value = 800;
+                osc2.type = 'sine';
+                gain2.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc2.start(audioCtx.currentTime);
+                osc2.stop(audioCtx.currentTime + 0.5);
+            }, 200);
+        } catch (e) {
+            console.error('Audio play failed:', e);
+        }
+    };
+
     // Settings inputs
     const focusInput = document.getElementById('focusDuration');
     const shortBreakInput = document.getElementById('shortBreakDuration');
@@ -2264,17 +2306,22 @@ function renderPomodoroTimer(container) {
             const actualFocusDuration = Math.floor((focusDuration * 60 - timeLeft) / 60);
             const durationToSave = actualFocusDuration > 0 ? actualFocusDuration : focusDuration;
 
+            // Play sound and show notification (only for focus session)
+            playAlarmSound();
+            if (Notification.permission === "granted") {
+                new Notification("Focus Session Complete! 🎉", {
+                    body: "Great job! Time for a well-deserved break.",
+                    icon: "logo.png"
+                });
+            }
+
             // Save to backend and refresh stats
             await saveSessionToBackend(durationToSave);
 
             // Update local stats immediately for responsive UI
             sessionCount++;
-            totalExp += 10;
             totalFocusMinutes += durationToSave;
-
-            if (sessionCount % 4 === 0) {
-                totalExp += 20;
-            }
+            // EXP is now loaded from backend in saveSessionToBackend
 
             updateStats();
 
@@ -2290,6 +2337,15 @@ function renderPomodoroTimer(container) {
             // Break completed - switch back to focus
             currentPhase = "focus";
             timeLeft = focusDuration * 60;
+            
+            // Play sound for break end (subtle notification)
+            playAlarmSound();
+            if (Notification.permission === "granted") {
+                new Notification("Break Over! 💪", {
+                    body: "Ready to focus again?",
+                    icon: "logo.png"
+                });
+            }
         }
 
         // Ensure button shows "Start" for the new phase
@@ -2356,9 +2412,40 @@ function renderPomodoroTimer(container) {
 
             if (res.ok) {
                 await loadStats();
+                // Also update XP from backend
+                await loadXP();
             }
         } catch (err) {
             console.error('[Focus Timer] Failed to save session:', err);
+        }
+    }
+
+    async function loadXP() {
+        try {
+            const res = await fetch('https://student-life-backend-1.onrender.com/api/xp', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                cache: 'no-store'
+            });
+
+            if (res.status === 401) {
+                clearAllUserState();
+                window.location.replace('index.html');
+                return;
+            }
+
+            const result = await res.json();
+            const data = result.data || result || {};
+
+            // Update XP from backend
+            if (data.xp !== undefined) {
+                totalExp = data.xp;
+                updateStats();
+            }
+        } catch (err) {
+            console.error('[Focus Timer] Failed to load XP:', err);
         }
     }
 
@@ -2415,10 +2502,10 @@ function renderPomodoroTimer(container) {
     skipBtn.addEventListener('click', () => {
         if (currentPhase === "focus") {
             currentPhase = "shortbreak";
-            timeLeft = SHORT_BREAK;
+            timeLeft = shortBreakDuration * 60;
         } else {
             currentPhase = "focus";
-            timeLeft = WORK_TIME;
+            timeLeft = focusDuration * 60;
         }
         resetTimer();
         updatePhaseLabel();
@@ -2428,6 +2515,7 @@ function renderPomodoroTimer(container) {
 
     // Load stats on page load
     loadStats();
+    loadXP();
     updateDisplay();
     updatePhaseLabel();
 }
