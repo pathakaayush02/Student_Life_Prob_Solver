@@ -866,11 +866,17 @@ function renderExpenseTracker(container) {
         flyTo(sourceElement, `${amount > 0 ? '+' : ''}${amount} pts`, { color: '#10b981' });
     };
 
-    const updateSavingsUI = () => {
-        const expenses = JSON.parse(localStorage.getItem('slps_expenses') || '[]');
+    // Backend-connected Expense Tracker
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.replace('index.html');
+        return;
+    }
+
+    const updateSavingsUI = (expenses, settings) => {
         const totalExpense = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
-        const savingsAmount = parseFloat(localStorage.getItem('sl_savings_amount') || '0');
-        
+        const savingsAmount = parseFloat(settings?.savingsTarget || 0);
+
         savingsInput.value = savingsAmount > 0 ? savingsAmount : '';
 
         if (totalExpense === 0) {
@@ -883,23 +889,20 @@ function renderExpenseTracker(container) {
         let savingsPercent = Math.floor((savingsAmount / totalExpense) * 100);
         if (savingsPercent > 100) savingsPercent = 100;
 
-        const oldPoints = parseInt(localStorage.getItem('sl_savings_points') || '0');
         let newPoints = savingsPercent >= 10 ? savingsPercent : 0;
 
         savingsPercentDisplay.textContent = `${savingsPercent}%`;
         const currentPoints = parseInt(savingsPointsDisplay.textContent || '0');
         animateCount(savingsPointsDisplay, isNaN(currentPoints) ? 0 : currentPoints, newPoints);
 
-        if (newPoints > oldPoints) {
-            animatePointsGain(newPoints - oldPoints, savingsPointsDisplay);
+        if (newPoints > currentPoints && newPoints > 0) {
+            animatePointsGain(newPoints - currentPoints, savingsPointsDisplay);
             document.querySelector('.savings-panel')?.classList.add('glow');
             setTimeout(() => {
                 const panel = document.querySelector('.savings-panel');
                 if (panel) panel.classList.remove('glow');
             }, 700);
             announce(`You earned ${newPoints} savings points!`);
-        } else if (newPoints < oldPoints && oldPoints > 0) {
-            announce(`Savings points updated to ${newPoints}.`);
         }
 
         if (savingsPercent >= 10) {
@@ -907,84 +910,156 @@ function renderExpenseTracker(container) {
         } else {
             savingsMessage.textContent = 'Save at least 10% to earn points.';
         }
-
-        localStorage.setItem('sl_savings_points', newPoints);
     };
 
-    const loadExpenses = () => {
-        const expenses = JSON.parse(localStorage.getItem('slps_expenses') || '[]');
-        list.innerHTML = '';
-        let total = 0;
+    const loadExpenses = async () => {
+        try {
+            const [expRes, settingsRes] = await Promise.all([
+                fetch('https://student-life-backend-1.onrender.com/api/expenses', {
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    cache: 'no-store'
+                }),
+                fetch('https://student-life-backend-1.onrender.com/api/expense-settings', {
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    cache: 'no-store'
+                })
+            ]);
 
-        if (expenses.length === 0) {
-            list.innerHTML = '<p class="text-muted text-center">No expenses recorded yet. Add your first expense above!</p>';
-        } else {
-            expenses.forEach((exp, index) => {
-                total += parseFloat(exp.amount);
-                const div = document.createElement('div');
-                div.className = 'card';
-                div.style.marginBottom = '1rem';
-                div.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <div style="font-weight: 600; color: var(--color-heading); margin-bottom: 0.25rem;">
-                                ${exp.name}
+            if (expRes.status === 401 || settingsRes.status === 401) {
+                clearAllUserState();
+                window.location.replace('index.html');
+                return;
+            }
+
+            const expenses = expRes.ok ? await expRes.json() : [];
+            const settings = settingsRes.ok ? await settingsRes.json() : {};
+
+            list.innerHTML = '';
+            let total = 0;
+
+            if (!Array.isArray(expenses) || expenses.length === 0) {
+                list.innerHTML = '<p class="text-muted text-center">No expenses recorded yet. Add your first expense above!</p>';
+            } else {
+                expenses.forEach((exp) => {
+                    total += parseFloat(exp.amount);
+                    const div = document.createElement('div');
+                    div.className = 'card';
+                    div.style.marginBottom = '1rem';
+                    div.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 600; color: var(--color-heading); margin-bottom: 0.25rem;">
+                                    ${exp.name}
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 1rem;">
+                                    <span class="badge badge-primary" style="font-size: 0.75rem;">${exp.category}</span>
+                                    <span style="font-weight: 700; color: var(--color-heading);">₹${parseFloat(exp.amount).toFixed(2)}</span>
+                                </div>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 1rem;">
-                                <span class="badge badge-primary" style="font-size: 0.75rem;">${exp.category}</span>
-                                <span style="font-weight: 700; color: var(--color-heading);">₹${parseFloat(exp.amount).toFixed(2)}</span>
-                            </div>
+                            <button class="btn btn-ghost" style="color: var(--color-danger);"
+                                    onclick="deleteExpense('${exp._id || exp.id}')"
+                                    aria-label="Delete ${exp.name}">
+                                <i data-lucide="trash-2" width="16" height="16"></i>
+                            </button>
                         </div>
-                        <button class="btn btn-ghost" style="color: var(--color-danger);" 
-                                onclick="deleteExpense(${index})"
-                                aria-label="Delete ${exp.name}">
-                            <i data-lucide="trash-2" width="16" height="16"></i>
-                        </button>
-                    </div>
-                `;
-                list.appendChild(div);
+                    `;
+                    list.appendChild(div);
+                });
+            }
+
+            totalDisplay.textContent = `₹${total.toFixed(2)}`;
+            updateSavingsUI(expenses, settings);
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        } catch (err) {
+            console.error('[Expense Tracker] Failed to load:', err);
+            list.innerHTML = '<p class="text-muted text-center">Failed to load expenses. Please try again.</p>';
+        }
+    };
+
+    window.deleteExpense = async (id) => {
+        try {
+            const res = await fetch(`https://student-life-backend-1.onrender.com/api/expenses/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                cache: 'no-store'
             });
-        }
-        
-        totalDisplay.textContent = `₹${total.toFixed(2)}`;
-        updateSavingsUI();
-        
-        // Re-initialize Lucide icons for new elements
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
+
+            if (res.status === 401) {
+                clearAllUserState();
+                window.location.replace('index.html');
+                return;
+            }
+
+            if (res.ok) {
+                await loadExpenses();
+            }
+        } catch (err) {
+            console.error('[Expense Tracker] Failed to delete:', err);
         }
     };
 
-    window.deleteExpense = (index) => {
-        const expenses = JSON.parse(localStorage.getItem('slps_expenses') || '[]');
-        expenses.splice(index, 1);
-        localStorage.setItem('slps_expenses', JSON.stringify(expenses));
-        loadExpenses();
-    };
-
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
+
         const newExp = {
             name: document.getElementById('expName').value,
             category: document.getElementById('expCategory').value,
-            amount: document.getElementById('expAmount').value,
-            id: Date.now()
+            amount: parseFloat(document.getElementById('expAmount').value)
         };
-        const expenses = JSON.parse(localStorage.getItem('slps_expenses') || '[]');
-        expenses.push(newExp);
-        localStorage.setItem('slps_expenses', JSON.stringify(expenses));
-        form.reset();
-        loadExpenses();
+
+        try {
+            const res = await fetch('https://student-life-backend-1.onrender.com/api/expenses', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                cache: 'no-store',
+                body: JSON.stringify(newExp)
+            });
+
+            if (res.status === 401) {
+                clearAllUserState();
+                window.location.replace('index.html');
+                return;
+            }
+
+            if (res.ok) {
+                form.reset();
+                await loadExpenses();
+            }
+        } catch (err) {
+            console.error('[Expense Tracker] Failed to add:', err);
+        }
     });
 
-    savingsInput.addEventListener('input', (e) => {
+    savingsInput.addEventListener('input', async (e) => {
         const val = parseFloat(e.target.value) || 0;
         if (val < 0) {
             e.target.value = 0;
             return;
         }
-        localStorage.setItem('sl_savings_amount', val);
-        updateSavingsUI();
+
+        try {
+            const res = await fetch('https://student-life-backend-1.onrender.com/api/expense-settings', {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                cache: 'no-store',
+                body: JSON.stringify({ savingsTarget: val })
+            });
+
+            if (res.status === 401) {
+                clearAllUserState();
+                window.location.replace('index.html');
+                return;
+            }
+
+            if (res.ok) {
+                await loadExpenses();
+            }
+        } catch (err) {
+            console.error('[Expense Tracker] Failed to update settings:', err);
+        }
     });
 
     loadExpenses();
