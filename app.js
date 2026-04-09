@@ -2173,6 +2173,13 @@ function renderPomodoroTimer(container) {
         lucide.createIcons();
     }
 
+    // Backend auth token
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.replace('index.html');
+        return;
+    }
+
     // Timer state
     let timer = null;
     let timeLeft = 25 * 60;
@@ -2208,16 +2215,22 @@ function renderPomodoroTimer(container) {
 
     function onSessionComplete() {
         if (currentPhase === "focus") {
+            const focusDuration = Math.floor((WORK_TIME - timeLeft) / 60);
+            const actualDuration = focusDuration > 0 ? focusDuration : Math.floor(WORK_TIME / 60);
+
+            // Save to backend
+            saveSessionToBackend(actualDuration);
+
+            // Update local stats immediately for responsive UI
             sessionCount++;
             totalExp += 10;
-            totalFocusMinutes += 25;
+            totalFocusMinutes += actualDuration;
 
             if (sessionCount % 4 === 0) {
                 totalExp += 20;
             }
 
             updateStats();
-            saveStats();
 
             if (sessionCount % 4 === 0) {
                 currentPhase = "longbreak";
@@ -2269,17 +2282,60 @@ function renderPomodoroTimer(container) {
         updateLevelUI(totalExp);
     }
 
-    function saveStats() {
-        localStorage.setItem("clutch_exp", totalExp);
-        localStorage.setItem("clutch_sessions", sessionCount);
-        localStorage.setItem("clutch_focus_minutes", totalFocusMinutes);
+    async function saveSessionToBackend(duration) {
+        try {
+            const res = await fetch('https://student-life-backend-1.onrender.com/api/focus-sessions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                cache: 'no-store',
+                body: JSON.stringify({ duration: duration })
+            });
+
+            if (res.status === 401) {
+                clearAllUserState();
+                window.location.replace('index.html');
+                return;
+            }
+
+            if (res.ok) {
+                await loadStats();
+            }
+        } catch (err) {
+            console.error('[Focus Timer] Failed to save session:', err);
+        }
     }
 
-    function loadStats() {
-        totalExp = parseInt(localStorage.getItem("clutch_exp")) || 0;
-        sessionCount = parseInt(localStorage.getItem("clutch_sessions")) || 0;
-        totalFocusMinutes = parseInt(localStorage.getItem("clutch_focus_minutes")) || 0;
-        updateStats();
+    async function loadStats() {
+        try {
+            const res = await fetch('https://student-life-backend-1.onrender.com/api/focus-stats', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                cache: 'no-store'
+            });
+
+            if (res.status === 401) {
+                clearAllUserState();
+                window.location.replace('index.html');
+                return;
+            }
+
+            const result = await res.json();
+            const data = result.data || result || {};
+
+            sessionCount = data.totalSessions || 0;
+            totalFocusMinutes = data.totalMinutes || 0;
+            // Calculate EXP: 10 per session + 20 bonus per 4 sessions
+            totalExp = (sessionCount * 10) + (Math.floor(sessionCount / 4) * 20);
+
+            updateStats();
+        } catch (err) {
+            console.error('[Focus Timer] Failed to load stats:', err);
+        }
     }
 
     function flashScreen() {
@@ -2288,14 +2344,13 @@ function renderPomodoroTimer(container) {
         setTimeout(() => document.body.style.background = "", 600);
     }
 
-    function resetStats() {
+    async function resetStats() {
         if (confirm("Reset all your stats? This cannot be undone.")) {
+            // Note: Backend doesn't have a reset endpoint yet, so we just clear local state
+            // The backend will continue to store sessions
             totalExp = 0;
             sessionCount = 0;
             totalFocusMinutes = 0;
-            localStorage.removeItem("clutch_exp");
-            localStorage.removeItem("clutch_sessions");
-            localStorage.removeItem("clutch_focus_minutes");
             updateStats();
         }
     }
