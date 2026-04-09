@@ -178,8 +178,7 @@
         }
     </script>
     <script>
-const GROQ_API_KEY = "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";
-let conversationHistory = [];
+// CLUTCH AI - Secure backend integration
 let isWaiting = false;
 
 function appendBubble(text, sender) {
@@ -197,60 +196,101 @@ function showTyping(show) {
   if (t) t.style.display = show ? "block" : "none";
 }
 
+async function loadChatHistory() {
+  const token = localStorage.getItem('token');
+  if (!token) return;
+
+  try {
+    const res = await fetch('https://student-life-backend-1.onrender.com/api/clutch-ai/history', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      cache: 'no-store'
+    });
+
+    if (res.status === 401) {
+      clearAllUserState();
+      window.location.replace('index.html');
+      return;
+    }
+
+    if (!res.ok) throw new Error('Failed to load history');
+
+    const data = await res.json();
+    const messages = data.history || [];
+
+    // Clear default welcome message
+    const box = document.getElementById("chat-messages");
+    if (box && messages.length > 0) {
+      box.innerHTML = '';
+      messages.forEach(msg => {
+        appendBubble(msg.content, msg.role === 'user' ? 'user' : 'ai');
+      });
+    }
+  } catch (err) {
+    console.error('[CLUTCH AI] Failed to load history:', err);
+  }
+}
+
 async function sendHumeMessage() {
   if (isWaiting) return;
+
   const input = document.getElementById("chat-input");
   if (!input) return;
+
   const message = input.value.trim();
   if (!message) return;
 
+  const token = localStorage.getItem('token');
+  if (!token) {
+    alert('Please login');
+    return;
+  }
+
+  // Immediately show user message
   input.value = "";
   appendBubble(message, "user");
   showTyping(true);
   isWaiting = true;
 
-  conversationHistory.push({ role: "user", content: message });
-
   try {
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
+    const res = await fetch('https://student-life-backend-1.onrender.com/api/clutch-ai/chat', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + GROQ_API_KEY
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        temperature: 0.7,
-        max_tokens: 150,
-        messages: [
-          {
-            role: "system",
-            content: "You are CLUTCH AI, a warm friendly emotional support companion for students. Listen and uplift their mood. Keep every response to 2-3 sentences max. Ask only one question at a time then stop and wait for user to reply. Never send multiple messages."
-          },
-          ...conversationHistory
-        ]
-      })
+      cache: 'no-store',
+      body: JSON.stringify({ message: message })
     });
 
-    console.log("Groq status:", res.status);
+    // Handle auth errors
+    if (res.status === 401) {
+      clearAllUserState();
+      window.location.replace('index.html');
+      return;
+    }
 
     if (!res.ok) {
-      const errText = await res.text();
-      console.error("Groq error body:", errText);
-      throw new Error("Status " + res.status + ": " + errText);
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.message || `Status ${res.status}`);
     }
 
     const data = await res.json();
-    const reply = data.choices[0].message.content.trim();
-    conversationHistory.push({ role: "assistant", content: reply });
+    const reply = data.reply || data.response || data.message;
+
+    if (!reply) {
+      throw new Error('No reply from AI');
+    }
+
     showTyping(false);
     appendBubble(reply, "ai");
 
   } catch (err) {
-    console.error("Full error:", err.message);
+    console.error('[CLUTCH AI] Error:', err);
     showTyping(false);
-    appendBubble("Error: " + err.message, "ai");
-    conversationHistory.pop();
+    appendBubble("Sorry, I'm having trouble connecting. Please try again in a moment.", "ai");
   } finally {
     isWaiting = false;
   }
@@ -258,8 +298,12 @@ async function sendHumeMessage() {
 
 document.addEventListener("DOMContentLoaded", function () {
   if (new URLSearchParams(window.location.search).get("tool") === "clutchai") {
+    // Load chat history on tool init
+    loadChatHistory();
+
     const sendBtn = document.getElementById("send-btn");
     const chatInput = document.getElementById("chat-input");
+
     if (sendBtn) sendBtn.addEventListener("click", sendHumeMessage);
     if (chatInput) {
       chatInput.addEventListener("keydown", function (e) {
