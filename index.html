@@ -17,6 +17,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="CLUTCH">
     <link rel="apple-touch-icon" href="/Student_Life_Prob_Solver/pwa_logo.jpg">
+    <script src="api.js"></script>
     <script>
         // Immediate auth check - if logged in, go to app
         (function() {
@@ -425,44 +426,23 @@
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
 
-            console.log('Attempting login for:', email);
+            console.log('[Auth] Attempting login for:', email);
 
             try {
-                const res = await fetch('https://student-life-backend-1.onrender.com/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
+                const data = await apiLogin(email, password);
 
-                console.log('Response status:', res.status);
-
-                const data = await res.json();
-                console.log('Response data:', data);
-
-                if (res.ok && data.success && data.token) {
-                    // Clear any stale localStorage data from previous user
-                    const keysToRemove = [
-                        'clutch_exp',
-                        'sl_study_tasks',
-                        'slps_expenses',
-                        'sl_savings_amount',
-                        'sl_savings_points',
-                        'slps_stress',
-                        'slps_career_saved'
-                    ];
-                    keysToRemove.forEach(key => localStorage.removeItem(key));
-                    console.log('Cleared stale data for new user');
-
+                if (data.success && data.token) {
+                    // Clear stale data and save new token
+                    clearAllUserState();
                     localStorage.setItem('token', data.token);
-                    console.log('Login successful, redirecting immediately...');
+                    console.log('[Auth] Login successful, redirecting...');
                     window.location.replace('app.html');
                 } else {
                     showMessage(data.message || 'Login failed. Please check your credentials.', 'error');
                 }
             } catch (error) {
-                console.error('Login error:', error);
-                alert('Login failed: ' + error.message);
-                showMessage('Network error. Please try again.', 'error');
+                console.error('[Auth] Login error:', error);
+                showMessage(error.message || 'Network error. Please try again.', 'error');
             } finally {
                 setLoading('loginBtn', false);
             }
@@ -476,21 +456,15 @@
             const email = document.getElementById('signupEmail').value.trim();
             const password = document.getElementById('signupPassword').value;
 
-            console.log('Attempting signup for:', email);
+            console.log('[Auth] Attempting signup for:', email);
 
             try {
-                const res = await fetch('https://student-life-backend-1.onrender.com/api/auth/signup', {
+                const data = await apiFetch('/api/auth/signup', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
 
-                console.log('Response status:', res.status);
-
-                const data = await res.json();
-                console.log('Response data:', data);
-
-                if (res.ok && data.success) {
+                if (data.success) {
                     showMessage('Account created! Please sign in.', 'success');
                     setTimeout(() => {
                         switchTab('login');
@@ -500,9 +474,8 @@
                     showMessage(data.message || 'Signup failed. Please try again.', 'error');
                 }
             } catch (error) {
-                console.error('Signup error:', error);
-                alert('Signup failed: ' + error.message);
-                showMessage('Network error. Please try again.', 'error');
+                console.error('[Auth] Signup error:', error);
+                showMessage(error.message || 'Network error. Please try again.', 'error');
             } finally {
                 setLoading('signupBtn', false);
             }

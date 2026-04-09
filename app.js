@@ -411,8 +411,6 @@ function renderStudyPlanner(container) {
     const resetExpBtn = document.getElementById('resetExpBtn');
     const ariaAnnouncer = document.getElementById('ariaAnnouncer');
 
-    const API_URL = 'https://student-life-backend-1.onrender.com/api/study-plans';
-    const XP_API_URL = 'https://student-life-backend-1.onrender.com/api/xp';
     const XP_PER_TASK = 10;
 
     const calculateEarnedExp = (hours) => Math.round(parseFloat(hours) * 5);
@@ -427,24 +425,35 @@ function renderStudyPlanner(container) {
     };
 
     const loadTasks = async () => {
-        const authHeaders = getAuthHeaders();
-        if (!authHeaders) return;
+        const token = localStorage.getItem('token');
+        if (!token) {
+            taskList.innerHTML = '<p class="text-muted text-center">Please login to view study plans</p>';
+            return;
+        }
+
+        console.log('[Study Plans] Fetching study plans...');
+        taskList.innerHTML = '<p class="text-muted text-center">Loading study plans...</p>';
 
         try {
-            taskList.innerHTML = '<p class="text-muted text-center">Loading study plans...</p>';
-            
-            const response = await fetch(API_URL, {
-                headers: authHeaders,
+            const res = await fetch('https://student-life-backend-1.onrender.com/api/study-plans', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
                 cache: 'no-store'
             });
-            
-            if (!response.ok) {
-                throw new Error('Failed to fetch study plans');
+
+            console.log('[Study Plans] Response status:', res.status);
+
+            if (!res.ok) {
+                throw new Error(`Failed to fetch plans: ${res.status}`);
             }
-            
-            const result = await response.json();
-            const studyPlans = Array.isArray(result.data) ? result.data : [];
-            
+
+            const data = await res.json();
+            console.log('[Study Plans] Response data:', data);
+
+            const studyPlans = Array.isArray(data.data) ? data.data : [];
+
             taskList.innerHTML = '';
             let totalHours = 0;
 
@@ -458,23 +467,23 @@ function renderStudyPlanner(container) {
                     const div = document.createElement('div');
                     div.className = 'card';
                     div.style.marginBottom = '1rem';
-                    
-                    const statusBadgeColor = plan.status === 'completed' ? 'success' : 
+
+                    const statusBadgeColor = plan.status === 'completed' ? 'success' :
                                             plan.status === 'in-progress' ? 'primary' : 'muted';
                     const isCompleted = plan.status === 'completed';
-                    
+
                     div.innerHTML = `
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 1rem;">
-                                <button class="btn btn-ghost" style="padding: 0.5rem; min-width: auto;" 
+                                <button class="btn btn-ghost" style="padding: 0.5rem; min-width: auto;"
                                         onclick="markStudyPlanDone('${plan._id || plan.id}')"
                                         aria-label="Mark ${plan.title} as completed"
                                         ${isCompleted ? 'disabled' : ''}>
-                                    <i data-lucide="${isCompleted ? 'check-circle' : 'circle'}" width="20" height="20" 
+                                    <i data-lucide="${isCompleted ? 'check-circle' : 'circle'}" width="20" height="20"
                                        style="color: ${isCompleted ? 'var(--color-success)' : 'var(--color-muted)'}"></i>
                                 </button>
                                 <div>
-                                    <div style="font-weight: 600; color: ${isCompleted ? 'var(--color-muted)' : 'var(--color-heading)'};">
+                                    <div style="font-weight: 600; color: ${isCompleted ? 'var(--color-muted)' : 'var(--color-heading)'}">
                                         ${plan.title}
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; flex-wrap: wrap;">
@@ -485,7 +494,7 @@ function renderStudyPlanner(container) {
                                     </div>
                                 </div>
                             </div>
-                            <button class="btn btn-ghost" style="color: var(--color-danger);" 
+                            <button class="btn btn-ghost" style="color: var(--color-danger);"
                                     onclick="deleteStudyPlan('${plan._id || plan.id}')"
                                     aria-label="Delete ${plan.title}">
                                 <i data-lucide="trash-2" width="16" height="16"></i>
@@ -494,7 +503,7 @@ function renderStudyPlanner(container) {
                     `;
                     taskList.appendChild(div);
                 });
-                
+
                 totalHoursBadge.textContent = `${totalHours.toFixed(1)} hours`;
                 expConversionText.textContent = `Total hours: ${totalHours.toFixed(1)}h → ${Math.round(totalHours * 5)} EXP possible`;
             }
@@ -504,34 +513,38 @@ function renderStudyPlanner(container) {
                 lucide.createIcons();
             }
         } catch (error) {
-            console.error('Error loading study plans:', error);
-            taskList.innerHTML = '<p class="text-muted text-center">Failed to load data</p>';
+            console.error('[Study Plans] Error loading:', error);
+            taskList.innerHTML = `<p class="text-muted text-center">Failed to load study plans</p>`;
             totalHoursBadge.textContent = '0 hours';
             expConversionText.textContent = `Total hours: 0h → 0 EXP possible`;
         }
-        
+
         // Fetch XP from backend
         await loadXpFromBackend();
     };
 
     const loadXpFromBackend = async () => {
-        const authHeaders = getAuthHeaders();
-        if (!authHeaders) return;
+        const token = localStorage.getItem('token');
+        if (!token) return;
 
         try {
-            const res = await fetch(XP_API_URL, {
-                headers: authHeaders,
+            const res = await fetch('https://student-life-backend-1.onrender.com/api/xp', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
                 cache: 'no-store'
             });
-            if (res.ok) {
-                const result = await res.json();
-                const xp = result.xp || 0;
-                const currentExp = parseInt(totalExpDisplay.textContent || '0');
-                animateCount(totalExpDisplay, isNaN(currentExp) ? 0 : currentExp, xp);
-                updateLevelUI(xp);
-            }
+
+            if (!res.ok) throw new Error('Failed to load XP');
+
+            const data = await res.json();
+            const xp = data.xp || 0;
+            const currentExp = parseInt(totalExpDisplay.textContent || '0');
+            animateCount(totalExpDisplay, isNaN(currentExp) ? 0 : currentExp, xp);
+            updateLevelUI(xp);
         } catch (error) {
-            console.error('Error loading XP:', error);
+            console.error('[XP] Error loading:', error);
             // Fallback to localStorage if backend fails
             const localXp = parseInt(localStorage.getItem('clutch_exp') || '0');
             const currentExp = parseInt(totalExpDisplay.textContent || '0');
@@ -542,97 +555,90 @@ function renderStudyPlanner(container) {
 
     // Global functions for study plan actions
     window.deleteStudyPlan = async (id) => {
-        if (!confirm('Are you sure you want to delete this study plan?')) {
-            return;
-        }
-        
-        const authHeaders = getAuthHeaders();
-        if (!authHeaders) return;
-        
+        if (!confirm('Are you sure you want to delete this study plan?')) return;
+
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
         try {
             const res = await fetch(`https://student-life-backend-1.onrender.com/api/study-plans/${id}`, {
-                method: "DELETE",
-                headers: authHeaders,
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
                 cache: 'no-store'
             });
-            
-            if (!res.ok) {
-                throw new Error('Failed to delete study plan');
-            }
-            
-            // Reload study plans and XP from backend
+
+            if (!res.ok) throw new Error('Failed to delete');
+
             await loadTasks();
             await loadXpFromBackend();
         } catch (error) {
-            console.error('Error deleting study plan:', error);
+            console.error('[Study Plans] Delete error:', error);
             alert('Failed to delete study plan');
         }
     };
 
     window.markStudyPlanDone = async (id) => {
-        const authHeaders = getAuthHeaders();
-        if (!authHeaders) return;
+        const token = localStorage.getItem('token');
+        if (!token) return;
 
         try {
-            // First update the study plan status
+            // Update status
             const res = await fetch(`https://student-life-backend-1.onrender.com/api/study-plans/${id}`, {
-                method: "PATCH",
+                method: 'PATCH',
                 headers: {
-                    ...authHeaders,
-                    "Content-Type": "application/json"
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 },
                 cache: 'no-store',
-                body: JSON.stringify({ status: "completed" })
+                body: JSON.stringify({ status: 'completed' })
             });
-            
-            if (!res.ok) {
-                throw new Error('Failed to update study plan');
-            }
-            
-            // Add XP to backend
+
+            if (!res.ok) throw new Error('Failed to update');
+
+            // Add XP
             try {
-                await fetch(XP_API_URL, {
-                    method: "POST",
+                await fetch('https://student-life-backend-1.onrender.com/api/xp', {
+                    method: 'POST',
                     headers: {
-                        ...authHeaders,
-                        "Content-Type": "application/json"
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
                     },
                     cache: 'no-store',
                     body: JSON.stringify({ xp: XP_PER_TASK })
                 });
             } catch (xpError) {
-                console.error('Error adding XP:', xpError);
-                // Fallback: save to localStorage
+                console.error('[XP] Add error:', xpError);
                 const currentXp = parseInt(localStorage.getItem('clutch_exp') || '0');
                 localStorage.setItem('clutch_exp', currentXp + XP_PER_TASK);
             }
-            
-            // Reload study plans and XP from backend
+
             await loadTasks();
         } catch (error) {
-            console.error('Error updating study plan:', error);
+            console.error('[Study Plans] Update error:', error);
             alert('Failed to mark study plan as done');
         }
     };
 
     resetExpBtn.addEventListener('click', async () => {
         if (confirm('Are you sure you want to reset all EXP? This will not delete your study plans.')) {
-            try {
-                // Try to reset on backend
-                const authHeaders = getAuthHeaders();
-                if (authHeaders) {
-                    await fetch(XP_API_URL, {
-                        method: "POST",
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    await fetch('https://student-life-backend-1.onrender.com/api/xp', {
+                        method: 'POST',
                         headers: {
-                            ...authHeaders,
-                            "Content-Type": "application/json"
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
                         },
                         cache: 'no-store',
                         body: JSON.stringify({ xp: 0, reset: true })
                     });
+                } catch (error) {
+                    console.error('[XP] Reset error:', error);
                 }
-            } catch (error) {
-                console.error('Error resetting XP on backend:', error);
             }
             localStorage.setItem('clutch_exp', 0);
             await loadTasks();
@@ -642,87 +648,71 @@ function renderStudyPlanner(container) {
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         const submitButton = form.querySelector('button[type="submit"]');
         const subjectName = document.getElementById('subject').value.trim();
         const duration = document.getElementById('hours').value;
-        
-        // Validation
+
         if (!subjectName) {
             alert('Please enter a subject name');
             return;
         }
-        
+
         const targetHours = Number(duration);
         if (isNaN(targetHours) || targetHours <= 0) {
             alert('Please enter a valid number of hours');
             return;
         }
-        
-        // Disable button during request
+
         submitButton.disabled = true;
         submitButton.textContent = 'Adding...';
-        
-        const requestBody = {
-            title: subjectName,
-            subject: subjectName,
-            description: "Added from frontend",
-            targetHours: targetHours,
-            status: "pending"
-        };
-        
-        const authHeaders = getAuthHeaders();
-        if (!authHeaders) return;
 
-        console.log("Sending:", requestBody);
-        
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('Please login');
+            submitButton.disabled = false;
+            submitButton.textContent = 'Add to Plan';
+            return;
+        }
+
         try {
-            const res = await fetch("https://student-life-backend-1.onrender.com/api/study-plans", {
-                method: "POST",
+            const res = await fetch('https://student-life-backend-1.onrender.com/api/study-plans', {
+                method: 'POST',
                 headers: {
-                    ...authHeaders,
-                    "Content-Type": "application/json"
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 },
                 cache: 'no-store',
-                body: JSON.stringify(requestBody)
+                body: JSON.stringify({
+                    title: subjectName,
+                    subject: subjectName,
+                    description: 'Added from frontend',
+                    targetHours: targetHours,
+                    status: 'pending'
+                })
             });
-            
-            const result = await res.json();
-            console.log("Response:", result);
-            
-            if (!res.ok || result.success === false) {
-                throw new Error(result.message || 'Failed to add study plan');
-            }
-            
-            // Clear form fields
+
+            if (!res.ok) throw new Error('Failed to add');
+
             form.reset();
-            
-            // Reload study plans from API
             await loadTasks();
-            
         } catch (error) {
-            console.error('Error adding study plan:', error);
-            alert(error.message || 'Failed to add study plan');
+            console.error('[Study Plans] Add error:', error);
+            alert('Failed to add study plan');
         } finally {
-            // Re-enable button
             submitButton.disabled = false;
             submitButton.textContent = 'Add to Plan';
         }
     });
 
-    loadTasks();
-
-    // Helper to get auth headers
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            alert("Please login");
-            return null;
-        }
-        return {
-            "Authorization": `Bearer ${token}`
-        };
-    };
+    // Load study plans ONLY after auth is verified
+    if (window.AuthState && window.AuthState.verified) {
+        // Auth already verified, load immediately
+        loadTasks();
+    } else if (window.AuthState) {
+        // Register callback for when auth is verified
+        window.AuthState.onVerified.push(loadTasks);
+    }
 }
 
 
