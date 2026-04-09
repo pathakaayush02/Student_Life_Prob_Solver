@@ -434,22 +434,43 @@ function renderStudyPlanner(container) {
         console.log('[Study Plans] Fetching study plans...');
         taskList.innerHTML = '<p class="text-muted text-center">Loading study plans...</p>';
 
-        try {
-            const res = await fetch('https://student-life-backend-1.onrender.com/api/study-plans', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                cache: 'no-store'
-            });
+        // 5s timeout to show "Waking up server" message
+        let slowServerTimeout = setTimeout(() => {
+            taskList.innerHTML = '<p class="text-muted text-center">Waking up server, please wait...</p>';
+        }, 5000);
 
-            console.log('[Study Plans] Response status:', res.status);
+        const fetchWithRetry = async (retryCount = 0) => {
+            try {
+                const res = await fetch('https://student-life-backend-1.onrender.com/api/study-plans', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    cache: 'no-store'
+                });
 
-            if (!res.ok) {
-                throw new Error(`Failed to fetch plans: ${res.status}`);
+                console.log('[Study Plans] Response status:', res.status);
+
+                if (!res.ok) {
+                    throw new Error(`Failed to fetch plans: ${res.status}`);
+                }
+
+                return await res.json();
+            } catch (error) {
+                if (retryCount === 0 && (error.name === 'TypeError' || error.message.includes('Failed to fetch'))) {
+                    // Network error - retry once
+                    console.log('[Study Plans] Retrying request...');
+                    taskList.innerHTML = '<p class="text-muted text-center">Waking up server, please wait...</p>';
+                    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2s before retry
+                    return fetchWithRetry(1);
+                }
+                throw error;
             }
+        };
 
-            const data = await res.json();
+        try {
+            clearTimeout(slowServerTimeout);
+            const data = await fetchWithRetry();
             console.log('[Study Plans] Response data:', data);
 
             const studyPlans = Array.isArray(data.data) ? data.data : [];
@@ -458,7 +479,7 @@ function renderStudyPlanner(container) {
             let totalHours = 0;
 
             if (studyPlans.length === 0) {
-                taskList.innerHTML = '<p class="text-muted text-center">No study plans yet</p>';
+                taskList.innerHTML = '<p class="text-muted text-center">No study plans yet. Add your first subject!</p>';
                 totalHoursBadge.textContent = '0 hours';
                 expConversionText.textContent = `Total hours: 0h → 0 EXP possible`;
             } else {
@@ -513,8 +534,9 @@ function renderStudyPlanner(container) {
                 lucide.createIcons();
             }
         } catch (error) {
-            console.error('[Study Plans] Error loading:', error);
-            taskList.innerHTML = `<p class="text-muted text-center">Failed to load study plans</p>`;
+            clearTimeout(slowServerTimeout);
+            console.error('[Study Plans] Error loading after retry:', error);
+            taskList.innerHTML = '<p class="text-muted text-center">Failed to load study plans</p>';
             totalHoursBadge.textContent = '0 hours';
             expConversionText.textContent = `Total hours: 0h → 0 EXP possible`;
         }
@@ -527,24 +549,37 @@ function renderStudyPlanner(container) {
         const token = localStorage.getItem('token');
         if (!token) return;
 
+        const fetchXpWithRetry = async (retryCount = 0) => {
+            try {
+                const res = await fetch('https://student-life-backend-1.onrender.com/api/xp', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    cache: 'no-store'
+                });
+
+                if (!res.ok) throw new Error('Failed to load XP');
+
+                return await res.json();
+            } catch (error) {
+                if (retryCount === 0 && (error.name === 'TypeError' || error.message.includes('Failed to fetch'))) {
+                    console.log('[XP] Retrying request...');
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    return fetchXpWithRetry(1);
+                }
+                throw error;
+            }
+        };
+
         try {
-            const res = await fetch('https://student-life-backend-1.onrender.com/api/xp', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                cache: 'no-store'
-            });
-
-            if (!res.ok) throw new Error('Failed to load XP');
-
-            const data = await res.json();
+            const data = await fetchXpWithRetry();
             const xp = data.xp || 0;
             const currentExp = parseInt(totalExpDisplay.textContent || '0');
             animateCount(totalExpDisplay, isNaN(currentExp) ? 0 : currentExp, xp);
             updateLevelUI(xp);
         } catch (error) {
-            console.error('[XP] Error loading:', error);
+            console.error('[XP] Error loading after retry:', error);
             // Fallback to localStorage if backend fails
             const localXp = parseInt(localStorage.getItem('clutch_exp') || '0');
             const currentExp = parseInt(totalExpDisplay.textContent || '0');
@@ -2327,19 +2362,26 @@ let deferredPrompt = null;
 document.addEventListener("DOMContentLoaded", function() {
   const btn = document.getElementById("pwa-install-btn");
 
+  // Show install button by default on both mobile and desktop
+  // It will be hidden if app is already installed
+  if (btn) {
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches ||
+                        window.navigator.standalone === true;
+    if (!isStandalone) {
+      btn.style.display = "inline-block";
+    }
+  }
+
   window.addEventListener("beforeinstallprompt", function(e) {
     e.preventDefault();
     deferredPrompt = e;
     if (btn) btn.style.display = "inline-block";
   });
-
-  if (window.matchMedia("(display-mode: standalone)").matches) {
-    if (btn) btn.style.display = "none";
-  }
 });
 
 function installPWA() {
   if (deferredPrompt) {
+    // Browser supports install prompt
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then(function(result) {
       console.log("PWA install:", result.outcome);
@@ -2347,6 +2389,10 @@ function installPWA() {
       const btn = document.getElementById("pwa-install-btn");
       if (btn) btn.style.display = "none";
     });
+  } else {
+    // Fallback for browsers without native install support (Safari, Firefox)
+    // Show manual install instructions
+    alert('To install CLUTCH:\n\n1. Chrome/Edge: Click the icon in the address bar\n2. Safari (iOS): Tap Share → Add to Home Screen\n3. Safari (Mac): File → Add to Dock');
   }
 }
 

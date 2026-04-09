@@ -64,12 +64,7 @@
                 return;
             }
 
-            // Show app immediately - hide loading overlay
-            document.addEventListener('DOMContentLoaded', function() {
-                document.getElementById('auth-checking').classList.add('hidden');
-            });
-
-            // Background token verification
+            // Background token verification - keep loading overlay until done
             async function verifyToken() {
                 try {
                     console.log('[Auth] Verifying token...');
@@ -79,6 +74,15 @@
                     // Mark auth as verified
                     window.AuthState.verified = true;
                     window.AuthState.user = data.user;
+
+                    // Display user email in header
+                    const userInfo = document.getElementById('userInfo');
+                    if (userInfo && data.user?.email) {
+                        userInfo.textContent = data.user.email;
+                    }
+
+                    // Hide loading overlay now that auth is verified
+                    document.getElementById('auth-checking').classList.add('hidden');
 
                     // Trigger callbacks for auth verified
                     window.AuthState.onVerified.forEach(callback => {
@@ -92,17 +96,21 @@
                         window.location.replace('index.html');
                         return;
                     }
-                    // For network/timeout errors, still allow app use
-                    // Mark as "verified" to allow data loading (will fail if token is truly invalid)
+                    // For network/timeout errors, still allow app use but hide overlay
                     window.AuthState.verified = true;
+                    document.getElementById('auth-checking').classList.add('hidden');
                     window.AuthState.onVerified.forEach(callback => {
                         try { callback(); } catch (e) { console.error(e); }
                     });
                 }
             }
 
-            // Run verification in background
-            setTimeout(verifyToken, 100);
+            // Run verification immediately
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', verifyToken);
+            } else {
+                verifyToken();
+            }
         })();
     </script>
 </head>
@@ -138,9 +146,12 @@
                 <div class="breadcrumb" id="breadcrumb">
                     <span class="breadcrumb-item active">Home</span>
                 </div>
-                <button id="logoutBtn" class="btn btn-ghost" style="padding:0.5rem 1rem; font-size:0.85rem;">
-                    <i data-lucide="log-out" width="16" height="16"></i> Logout
-                </button>
+                <div style="display:flex; align-items:center; gap:0.75rem;">
+                    <span id="userInfo" style="font-size:0.85rem; color:var(--color-muted);"></span>
+                    <button id="logoutBtn" class="btn btn-ghost" style="padding:0.5rem 1rem; font-size:0.85rem;">
+                        <i data-lucide="log-out" width="16" height="16"></i> Logout
+                    </button>
+                </div>
             </div>
         </div>
     </nav>
@@ -165,7 +176,7 @@
                 <div class="hero-buttons">
                   <a href="#tools" class="btn-explore">Explore Tools</a>
                   <a href="https://docs.google.com/forms/d/e/1FAIpQLSe6nYD_lLoes6Zy4NjtTU-vK3_RiAi3dzfyId7WUJ3dbGVVJg/viewform?usp=dialog" target="_blank" class="btn-survey">Take the Survey</a>
-                  <button id="pwa-install-btn" onclick="installPWA()" style="display:none;">
+                  <button id="pwa-install-btn" onclick="installPWA()">
                     📲 Download App
                   </button>
                 </div>
