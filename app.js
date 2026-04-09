@@ -2180,16 +2180,48 @@ function renderPomodoroTimer(container) {
         return;
     }
 
+    // Settings inputs
+    const focusInput = document.getElementById('focusDuration');
+    const shortBreakInput = document.getElementById('shortBreakDuration');
+    const longBreakInput = document.getElementById('longBreakDuration');
+
+    // Dynamic durations from settings
+    let focusDuration = parseInt(focusInput?.value) || 25;
+    let shortBreakDuration = parseInt(shortBreakInput?.value) || 5;
+    let longBreakDuration = parseInt(longBreakInput?.value) || 15;
+
+    // Update durations when user changes settings
+    focusInput?.addEventListener('change', () => {
+        focusDuration = parseInt(focusInput.value) || 25;
+        if (currentPhase === 'focus' && !isRunning) {
+            timeLeft = focusDuration * 60;
+            updateDisplay();
+        }
+    });
+
+    shortBreakInput?.addEventListener('change', () => {
+        shortBreakDuration = parseInt(shortBreakInput.value) || 5;
+        if (currentPhase === 'shortbreak' && !isRunning) {
+            timeLeft = shortBreakDuration * 60;
+            updateDisplay();
+        }
+    });
+
+    longBreakInput?.addEventListener('change', () => {
+        longBreakDuration = parseInt(longBreakInput.value) || 15;
+        if (currentPhase === 'longbreak' && !isRunning) {
+            timeLeft = longBreakDuration * 60;
+            updateDisplay();
+        }
+    });
+
     // Timer state
     let timer = null;
-    let timeLeft = 25 * 60;
+    let timeLeft = focusDuration * 60;
     let isRunning = false;
     let sessionCount = 0;
     let totalExp = 0;
     let totalFocusMinutes = 0;
-    const WORK_TIME = 25 * 60;
-    const SHORT_BREAK = 5 * 60;
-    const LONG_BREAK = 15 * 60;
     let currentPhase = "focus";
 
     function startPause() {
@@ -2229,16 +2261,16 @@ function renderPomodoroTimer(container) {
         isRunning = false;
 
         if (currentPhase === "focus") {
-            const focusDuration = Math.floor((WORK_TIME - timeLeft) / 60);
-            const actualDuration = focusDuration > 0 ? focusDuration : Math.floor(WORK_TIME / 60);
+            const actualFocusDuration = Math.floor((focusDuration * 60 - timeLeft) / 60);
+            const durationToSave = actualFocusDuration > 0 ? actualFocusDuration : focusDuration;
 
             // Save to backend and refresh stats
-            await saveSessionToBackend(actualDuration);
+            await saveSessionToBackend(durationToSave);
 
             // Update local stats immediately for responsive UI
             sessionCount++;
             totalExp += 10;
-            totalFocusMinutes += actualDuration;
+            totalFocusMinutes += durationToSave;
 
             if (sessionCount % 4 === 0) {
                 totalExp += 20;
@@ -2249,15 +2281,15 @@ function renderPomodoroTimer(container) {
             // Switch to break phase
             if (sessionCount % 4 === 0) {
                 currentPhase = "longbreak";
-                timeLeft = LONG_BREAK;
+                timeLeft = longBreakDuration * 60;
             } else {
                 currentPhase = "shortbreak";
-                timeLeft = SHORT_BREAK;
+                timeLeft = shortBreakDuration * 60;
             }
         } else {
             // Break completed - switch back to focus
             currentPhase = "focus";
-            timeLeft = WORK_TIME;
+            timeLeft = focusDuration * 60;
         }
 
         // Ensure button shows "Start" for the new phase
@@ -2271,7 +2303,11 @@ function renderPomodoroTimer(container) {
         clearInterval(timer);
         isRunning = false;
         currentPhase = "focus";
-        timeLeft = WORK_TIME;
+        // Re-read settings in case user changed them
+        focusDuration = parseInt(focusInput?.value) || 25;
+        shortBreakDuration = parseInt(shortBreakInput?.value) || 5;
+        longBreakDuration = parseInt(longBreakInput?.value) || 15;
+        timeLeft = focusDuration * 60;
         updateDisplay();
         updatePhaseLabel();
         updateStartPauseButton();
