@@ -2196,10 +2196,8 @@ function renderPomodoroTimer(container) {
         if (isRunning) {
             clearInterval(timer);
             isRunning = false;
-            startPauseBtn.innerHTML = '<i data-lucide="play" width="20" height="20" style="margin-right: 0.5rem;"></i>Start';
         } else {
             isRunning = true;
-            startPauseBtn.innerHTML = '<i data-lucide="pause" width="20" height="20" style="margin-right: 0.5rem;"></i>Pause';
             timer = setInterval(() => {
                 if (timeLeft <= 0) {
                     clearInterval(timer);
@@ -2211,15 +2209,31 @@ function renderPomodoroTimer(container) {
                 updateDisplay();
             }, 1000);
         }
+        updateStartPauseButton();
     }
 
-    function onSessionComplete() {
+    function updateStartPauseButton() {
+        if (isRunning) {
+            startPauseBtn.innerHTML = '<i data-lucide="pause" width="20" height="20" style="margin-right: 0.5rem;"></i>Pause';
+        } else {
+            startPauseBtn.innerHTML = '<i data-lucide="play" width="20" height="20" style="margin-right: 0.5rem;"></i>Start';
+        }
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    async function onSessionComplete() {
+        // Stop timer and reset running state
+        clearInterval(timer);
+        isRunning = false;
+
         if (currentPhase === "focus") {
             const focusDuration = Math.floor((WORK_TIME - timeLeft) / 60);
             const actualDuration = focusDuration > 0 ? focusDuration : Math.floor(WORK_TIME / 60);
 
-            // Save to backend
-            saveSessionToBackend(actualDuration);
+            // Save to backend and refresh stats
+            await saveSessionToBackend(actualDuration);
 
             // Update local stats immediately for responsive UI
             sessionCount++;
@@ -2232,6 +2246,7 @@ function renderPomodoroTimer(container) {
 
             updateStats();
 
+            // Switch to break phase
             if (sessionCount % 4 === 0) {
                 currentPhase = "longbreak";
                 timeLeft = LONG_BREAK;
@@ -2240,10 +2255,13 @@ function renderPomodoroTimer(container) {
                 timeLeft = SHORT_BREAK;
             }
         } else {
+            // Break completed - switch back to focus
             currentPhase = "focus";
             timeLeft = WORK_TIME;
         }
 
+        // Ensure button shows "Start" for the new phase
+        updateStartPauseButton();
         updateDisplay();
         updatePhaseLabel();
         flashScreen();
@@ -2256,7 +2274,7 @@ function renderPomodoroTimer(container) {
         timeLeft = WORK_TIME;
         updateDisplay();
         updatePhaseLabel();
-        startPauseBtn.innerHTML = '<i data-lucide="play" width="20" height="20" style="margin-right: 0.5rem;"></i>Start';
+        updateStartPauseButton();
     }
 
     function updateDisplay() {
