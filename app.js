@@ -2166,10 +2166,9 @@ async function renderPomodoroTimer(container) {
     const BASE_URL = 'https://student-life-backend-1.onrender.com';
 
     // ==========================================
-    // PRODUCTION-READY STATE MANAGEMENT
+    // CLEAN STATE - NO localStorage FOR STATS
     // ==========================================
-    
-    // Core timer state - minimal and clean
+
     const state = {
         timerInterval: null,
         isRunning: false,
@@ -2183,7 +2182,7 @@ async function renderPomodoroTimer(container) {
         timeLeft: (parseInt(focusInput?.value) || 25) * 60
     };
 
-    // Backend data cache - single source of truth
+    // Backend data - ONLY source of truth for stats
     const backendData = {
         totalSessions: 0,
         totalMinutes: 0,
@@ -2193,14 +2192,13 @@ async function renderPomodoroTimer(container) {
     // ==========================================
     // AUDIO & NOTIFICATIONS
     // ==========================================
-    
+
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    
+
     function playAlarmSound() {
         try {
             const now = audioContext.currentTime;
-            
-            // First beep
+
             const osc1 = audioContext.createOscillator();
             const gain1 = audioContext.createGain();
             osc1.connect(gain1);
@@ -2211,8 +2209,7 @@ async function renderPomodoroTimer(container) {
             gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
             osc1.start(now);
             osc1.stop(now + 0.3);
-            
-            // Second beep
+
             const osc2 = audioContext.createOscillator();
             const gain2 = audioContext.createGain();
             osc2.connect(gain2);
@@ -2223,8 +2220,7 @@ async function renderPomodoroTimer(container) {
             gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.65);
             osc2.start(now + 0.35);
             osc2.stop(now + 0.65);
-            
-            // Third beep
+
             const osc3 = audioContext.createOscillator();
             const gain3 = audioContext.createGain();
             osc3.connect(gain3);
@@ -2235,7 +2231,7 @@ async function renderPomodoroTimer(container) {
             gain3.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
             osc3.start(now + 0.7);
             osc3.stop(now + 1.0);
-            
+
         } catch (e) { 
             console.error('[Focus Timer] Audio play failed:', e); 
         }
@@ -2259,7 +2255,7 @@ async function renderPomodoroTimer(container) {
     // ==========================================
     // UI UPDATES
     // ==========================================
-    
+
     function updateDisplay() {
         const mins = Math.floor(state.timeLeft / 60).toString().padStart(2, "0");
         const secs = (state.timeLeft % 60).toString().padStart(2, "0");
@@ -2271,7 +2267,7 @@ async function renderPomodoroTimer(container) {
         const text = state.isRunning ? 'Pause' : 'Start';
         startPauseBtn.innerHTML = `<i data-lucide="${icon}" width="20" height="20" style="margin-right: 0.5rem;"></i>${text}`;
         if (typeof lucide !== 'undefined') lucide.createIcons();
-        
+
         startPauseBtn.style.opacity = state.savingInProgress ? '0.6' : '1';
         startPauseBtn.style.pointerEvents = state.savingInProgress ? 'none' : 'auto';
     }
@@ -2282,14 +2278,15 @@ async function renderPomodoroTimer(container) {
             break: "Break"
         };
         sessionLabelDisplay.textContent = labels[state.currentMode] || "Break";
-        
+
+        // Cycle calculation from backend ONLY
         const sessions = backendData.totalSessions;
         let cyclePosition = sessions % 4;
         if (cyclePosition === 0 && sessions > 0) cyclePosition = 4;
         if (cyclePosition === 0 && sessions === 0) cyclePosition = 1;
-        
+
         cycleTextDisplay.textContent = `${cyclePosition} / 4 sessions until long break`;
-        
+
         // Update dots
         const dots = document.querySelectorAll('#cycleDots > div');
         dots.forEach((dot, index) => {
@@ -2298,6 +2295,7 @@ async function renderPomodoroTimer(container) {
     }
 
     function updateStatsUI() {
+        // ONLY backend data - no local calculations
         totalSetsDisplay.textContent = backendData.totalSessions;
         totalFocusTimeDisplay.textContent = backendData.totalMinutes + " min";
         totalExpDisplay.textContent = backendData.xp;
@@ -2313,14 +2311,14 @@ async function renderPomodoroTimer(container) {
     }
 
     // ==========================================
-    // BACKEND API CALLS
+    // BACKEND API - ONLY /api/focus-stats FOR STATS
     // ==========================================
-    
+
     async function apiCall(endpoint, options = {}) {
         const url = `${BASE_URL}${endpoint}`;
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
-        
+
         try {
             const res = await fetch(url, {
                 ...options,
@@ -2332,20 +2330,20 @@ async function renderPomodoroTimer(container) {
                 cache: 'no-store',
                 signal: controller.signal
             });
-            
+
             clearTimeout(timeoutId);
-            
+
             if (res.status === 401) {
                 localStorage.clear();
                 window.location.replace('index.html');
                 throw new Error('Unauthorized');
             }
-            
+
             if (!res.ok) {
                 const errorText = await res.text();
                 throw new Error(`HTTP ${res.status}: ${errorText}`);
             }
-            
+
             return await res.json();
         } catch (err) {
             clearTimeout(timeoutId);
@@ -2356,17 +2354,20 @@ async function renderPomodoroTimer(container) {
         }
     }
 
+    // Load ALL stats from /api/focus-stats ONLY - NO /api/xp
     async function loadStats() {
         try {
             const data = await apiCall('/api/focus-stats');
             const stats = data.data || data || {};
-            
+
+            // ONLY backend values - never local calculations
             backendData.totalSessions = stats.totalSessions || 0;
             backendData.totalMinutes = stats.totalMinutes || 0;
-            
+            backendData.xp = stats.xp || 0;
+
             updateStatsUI();
             updatePhaseLabel();
-            
+
             return backendData;
         } catch (err) {
             console.error('[Focus Timer] Failed to load stats:', err);
@@ -2374,48 +2375,29 @@ async function renderPomodoroTimer(container) {
         }
     }
 
-    async function loadXP() {
-        try {
-            const data = await apiCall('/api/xp');
-            const xp = data.xp || 0;
-            
-            backendData.xp = xp;
-            updateStatsUI();
-            
-            return { xp };
-        } catch (err) {
-            console.error('[Focus Timer] Failed to load XP:', err);
-            return { xp: backendData.xp };
-        }
-    }
-
+    // Save focus session - ONLY for focus mode, NOT break
     async function saveFocusSession(duration, sessionId) {
         try {
             const data = await apiCall('/api/focus-sessions', {
                 method: 'POST',
                 body: JSON.stringify({
                     duration: duration,
-                    clientSessionId: sessionId,
-                    timestamp: new Date().toISOString()
+                    clientSessionId: sessionId
                 })
             });
-            
+
             console.log('[Focus Timer] Session saved:', data);
             return { success: true, data };
         } catch (err) {
-            if (err.message && err.message.includes('409')) {
-                console.log('[Focus Timer] Session already saved (duplicate)');
-                return { success: true, duplicate: true };
-            }
-            
             console.error('[Focus Timer] Failed to save session:', err);
             return { success: false, error: err.message };
         }
     }
 
+    // Reset stats - POST method as specified
     async function resetBackendStats() {
         try {
-            await apiCall('/api/focus-reset', { method: 'DELETE' });
+            await apiCall('/api/focus-reset', { method: 'POST' });
             console.log('[Focus Timer] Stats reset successfully');
             return { success: true };
         } catch (err) {
@@ -2425,63 +2407,64 @@ async function renderPomodoroTimer(container) {
     }
 
     // ==========================================
-    // SESSION COMPLETION (ATOMIC OPERATION)
+    // SESSION COMPLETION - ATOMIC, SINGLE PATH
     // ==========================================
-    
+
     async function handleSessionComplete() {
-        // CRITICAL: Prevent duplicate processing
+        // GUARD: Prevent any duplicate processing
         if (state.sessionSaved || state.savingInProgress) {
-            console.log('[Focus Timer] Session already being processed, skipping');
+            console.log('[Focus Timer] Session already processed, skipping');
             return;
         }
-        
+
+        // Lock immediately
         state.savingInProgress = true;
         state.sessionSaved = true;
         state.isRunning = false;
-        
+
         updateButton();
         playAlarmSound();
-        
+
         if (state.currentMode === "focus") {
-            // FOCUS SESSION COMPLETION
+            // FOCUS COMPLETION - Save to backend
             showNotification(
-                "Focus Session Complete! 🎉", 
+                "Focus Session Complete! ",
                 `Great job! You completed ${state.focusDuration} minutes of focused work. Time for a break!`
             );
-            
-            // Save to backend
+
+            // ONE save to backend
             await saveFocusSession(state.focusDuration, state.currentSessionId);
-            
-            // Reload stats from backend
-            await Promise.all([loadStats(), loadXP()]);
-            
-            // Switch to break
+
+            // Reload ALL stats from backend (includes XP, sessions, time)
+            await loadStats();
+
+            // Switch to break based on updated backend state
             const sessions = backendData.totalSessions;
             const isLongBreak = sessions > 0 && sessions % 4 === 0;
-            
+
             state.currentMode = "break";
             state.timeLeft = isLongBreak ? state.longBreakDuration * 60 : state.shortBreakDuration * 60;
-            
-            console.log(`[Focus Timer] Switching to ${isLongBreak ? 'long' : 'short'} break after session ${sessions}`);
-            
+
+            console.log(`[Focus Timer] Break after session ${sessions}`);
+
         } else {
-            // BREAK SESSION COMPLETION
+            // BREAK COMPLETION - NO backend call
             showNotification(
-                "Break Over! 💪", 
+                "Break Over! ",
                 "Your break is complete. Ready to focus again?"
             );
-            
+
             state.currentMode = "focus";
             state.timeLeft = state.focusDuration * 60;
-            
-            console.log('[Focus Timer] Break complete, switching to focus');
+
+            console.log('[Focus Timer] Break complete, ready to focus');
         }
-        
+
         // Reset for next session
         state.currentSessionId = null;
         state.savingInProgress = false;
-        
-        // Final UI updates
+
+        // Update UI
         updateDisplay();
         updateButton();
         updatePhaseLabel();
@@ -2491,43 +2474,44 @@ async function renderPomodoroTimer(container) {
     // ==========================================
     // TIMER CONTROLS
     // ==========================================
-    
+
     function startTimer() {
         if (state.isRunning || state.savingInProgress) {
-            console.log('[Focus Timer] Cannot start: already running or saving');
+            console.log('[Focus Timer] Cannot start: running or saving');
             return;
         }
-        
+
         // Generate unique session ID for focus sessions
         if (state.currentMode === "focus" && !state.currentSessionId) {
             state.currentSessionId = `focus-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             state.sessionSaved = false;
-            console.log('[Focus Timer] New focus session started:', state.currentSessionId);
+            console.log('[Focus Timer] New session:', state.currentSessionId);
         }
-        
+
         state.isRunning = true;
-        
+
         state.timerInterval = setInterval(() => {
             state.timeLeft--;
             updateDisplay();
-            
+
+            // Stop at zero - never negative
             if (state.timeLeft <= 0) {
                 clearInterval(state.timerInterval);
                 state.timerInterval = null;
                 handleSessionComplete();
             }
         }, 1000);
-        
+
         updateButton();
     }
 
     function pauseTimer() {
         if (!state.isRunning) return;
-        
+
         clearInterval(state.timerInterval);
         state.timerInterval = null;
         state.isRunning = false;
-        
+
         updateButton();
         console.log('[Focus Timer] Paused');
     }
@@ -2537,15 +2521,14 @@ async function renderPomodoroTimer(container) {
         else startTimer();
     }
 
+    // Reset timer - ONLY UI, NO backend
     function resetTimer() {
-        // Stop timer
         clearInterval(state.timerInterval);
         state.timerInterval = null;
         state.isRunning = false;
         state.sessionSaved = false;
         state.savingInProgress = false;
-        state.currentSessionId = null;
-        
+
         // Reset time based on current mode
         if (state.currentMode === "focus") {
             state.timeLeft = state.focusDuration * 60;
@@ -2554,27 +2537,23 @@ async function renderPomodoroTimer(container) {
             const isLongBreakSlot = sessions > 0 && sessions % 4 === 0;
             state.timeLeft = isLongBreakSlot ? state.longBreakDuration * 60 : state.shortBreakDuration * 60;
         }
-        
+
         updateDisplay();
         updateButton();
         updatePhaseLabel();
-        
-        console.log('[Focus Timer] Timer reset');
+
+        console.log('[Focus Timer] Timer reset (UI only)');
     }
 
+    // Reset stats - calls backend, then reloads
     async function resetStats() {
         if (!confirm("Reset all your stats? This cannot be undone.")) return;
-        
+
         const result = await resetBackendStats();
-        
+
         if (result.success) {
-            backendData.totalSessions = 0;
-            backendData.totalMinutes = 0;
-            backendData.xp = 0;
-            
-            await Promise.all([loadStats(), loadXP()]);
+            await loadStats();
             resetTimer();
-            
             console.log('[Focus Timer] Stats reset complete');
         } else {
             alert('Failed to reset stats. Please try again.');
@@ -2582,90 +2561,17 @@ async function renderPomodoroTimer(container) {
     }
 
     // ==========================================
-    // SETTINGS HANDLERS
+    // INITIALIZATION - Load from backend ONLY
     // ==========================================
-    
-    focusInput?.addEventListener('change', () => {
-        const newDuration = parseInt(focusInput.value);
-        if (newDuration >= 1 && newDuration <= 120) {
-            state.focusDuration = newDuration;
-            if (state.currentMode === 'focus' && !state.isRunning) {
-                state.timeLeft = state.focusDuration * 60;
-                updateDisplay();
-            }
-        }
-    });
 
-    shortBreakInput?.addEventListener('change', () => {
-        const newDuration = parseInt(shortBreakInput.value);
-        if (newDuration >= 1 && newDuration <= 60) {
-            state.shortBreakDuration = newDuration;
-        }
-    });
-
-    longBreakInput?.addEventListener('change', () => {
-        const newDuration = parseInt(longBreakInput.value);
-        if (newDuration >= 1 && newDuration <= 120) {
-            state.longBreakDuration = newDuration;
-        }
-    });
-
-    // ==========================================
-    // EVENT LISTENERS
-    // ==========================================
-    
-    startPauseBtn.addEventListener('click', toggleTimer);
-    resetBtn.addEventListener('click', resetTimer);
-    resetStatsBtn.addEventListener('click', resetStats);
-    
-    skipBtn.addEventListener('click', () => {
-        clearInterval(state.timerInterval);
-        state.timerInterval = null;
-        state.isRunning = false;
-        state.sessionSaved = false;
-        state.currentSessionId = null;
-        
-        if (state.currentMode === "focus") {
-            state.currentMode = "break";
-            const sessions = backendData.totalSessions;
-            const isLongBreakSlot = sessions > 0 && sessions % 4 === 0;
-            state.timeLeft = isLongBreakSlot ? state.longBreakDuration * 60 : state.shortBreakDuration * 60;
-        } else {
-            state.currentMode = "focus";
-            state.timeLeft = state.focusDuration * 60;
-        }
-        
-        updateDisplay();
-        updateButton();
-        updatePhaseLabel();
-        
-        console.log('[Focus Timer] Phase skipped to:', state.currentMode);
-    });
-
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
-            e.preventDefault();
-            toggleTimer();
-        }
-        if (e.code === 'KeyR' && e.target.tagName !== 'INPUT') {
-            e.preventDefault();
-            resetTimer();
-        }
-    });
-
-    // ==========================================
-    // INITIALIZATION
-    // ==========================================
-    
     console.log('[Focus Timer] Initializing...');
-    
-    await Promise.all([loadStats(), loadXP()]);
-    
+
+    await loadStats();
+
     updateDisplay();
     updateButton();
     updatePhaseLabel();
-    
+
     console.log('[Focus Timer] Ready. Backend state:', backendData);
 }
 
