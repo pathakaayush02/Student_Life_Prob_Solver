@@ -262,7 +262,7 @@ function updateLevelUI(exp) {
  * Orchestrates tool rendering based on URL query parameters.
  * Example: workspace.html?tool=study
  */
-function initWorkspace() {
+async function initWorkspace() {
     const params = new URLSearchParams(window.location.search);
     const tool = params.get('tool');
     const workspace = document.getElementById('toolWorkspace');
@@ -294,7 +294,7 @@ function initWorkspace() {
             break;
         case 'pomodoro':
             breadcrumb.textContent = 'Focus Timer';
-            renderPomodoroTimer(workspace);
+            await renderPomodoroTimer(workspace);
             break;
         case 'clutchai':
             breadcrumb.textContent = 'CLUTCH AI';
@@ -2025,7 +2025,7 @@ function renderCareerHelper(container) {
  * Features: Configurable durations, EXP system, Session cycles, LocalStorage persistence.
  * @param {HTMLElement} container - The workspace container to render into.
  */
-function renderPomodoroTimer(container) {
+async function renderPomodoroTimer(container) {
     // Default Durations (Minutes)
     const DEFAULTS = {
         focus: 25,
@@ -2257,25 +2257,35 @@ function renderPomodoroTimer(container) {
         }
     });
 
-    // Timer state
+    // Timer state - backend is source of truth for all stats
     let timer = null;
     let timeLeft = focusDuration * 60;
     let isRunning = false;
-    let sessionCount = 0;
-    let totalExp = 0;
-    let totalFocusMinutes = 0;
     let currentPhase = "focus";
-    let sessionSaved = false; // Prevent duplicate XP calls
+    let sessionSaved = false; // Prevent duplicate saves
+    let clientSessionId = null; // Unique ID per focus session for deduplication
+    
+    // Stats from backend (single source of truth)
+    let backendStats = {
+        totalSessions: 0,
+        totalMinutes: 0,
+        xp: 0
+    };
 
     function startPause() {
         if (isRunning) {
             clearInterval(timer);
             isRunning = false;
+            updateStartPauseButton();
         } else {
+            // Generate new session ID when starting a focus session
+            if (currentPhase === 'focus') {
+                clientSessionId = Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                sessionSaved = false;
+            }
             isRunning = true;
-            sessionSaved = false; // Reset flag when starting new session
             timer = setInterval(() => {
-                if (timeLeft <= 0 && !sessionSaved) {
+                if (timeLeft <= 0) {
                     clearInterval(timer);
                     isRunning = false;
                     onSessionComplete();
@@ -2284,8 +2294,8 @@ function renderPomodoroTimer(container) {
                 timeLeft--;
                 updateDisplay();
             }, 1000);
+            updateStartPauseButton();
         }
-        updateStartPauseButton();
     }
 
     function updateStartPauseButton() {
@@ -2300,19 +2310,18 @@ function renderPomodoroTimer(container) {
     }
 
     async function onSessionComplete() {
-        // Stop timer and reset running state
+        // Stop timer
         clearInterval(timer);
         isRunning = false;
 
-        // Prevent duplicate saves
-        if (sessionSaved) return;
-        sessionSaved = true;
-
-        if (currentPhase === "focus") {
+        if (currentPhase === "focus" && !sessionSaved) {
+            // Mark as saved immediately to prevent duplicates
+            sessionSaved = true;
+            
             const actualFocusDuration = Math.floor((focusDuration * 60 - timeLeft) / 60);
             const durationToSave = actualFocusDuration > 0 ? actualFocusDuration : focusDuration;
 
-            // Play sound and show notification (only for focus session)
+            // Play notification and sound
             playAlarmSound();
             if (Notification.permission === "granted") {
                 new Notification("Focus Session Complete! 🎉", {
@@ -2321,23 +2330,25 @@ function renderPomodoroTimer(container) {
                 });
             }
 
-            // Save to backend and refresh stats (backend is source of truth)
-            await saveSessionToBackend(durationToSave);
+            // Save to backend and refresh ALL stats from backend
+            await saveSessionToBackend(durationToSave, clientSessionId);
+            
+            // Re-fetch latest backend state
+            await refreshAllStats();
 
-            // Switch to break phase based on updated session count
-            if (sessionCount % 4 === 0) {
+            // Switch to break based on UPDATED backend state
+            if (backendStats.totalSessions % 4 === 0) {
                 currentPhase = "longbreak";
                 timeLeft = longBreakDuration * 60;
             } else {
                 currentPhase = "shortbreak";
                 timeLeft = shortBreakDuration * 60;
             }
-        } else {
-            // Break completed - switch back to focus
+        } else if (currentPhase !== "focus") {
+            // Break completed - just switch back to focus, NO backend calls
             currentPhase = "focus";
             timeLeft = focusDuration * 60;
             
-            // Play sound for break end (subtle notification)
             playAlarmSound();
             if (Notification.permission === "granted") {
                 new Notification("Break Over! 💪", {
@@ -2347,7 +2358,6 @@ function renderPomodoroTimer(container) {
             }
         }
 
-        // Ensure button shows "Start" for the new phase
         updateStartPauseButton();
         updateDisplay();
         updatePhaseLabel();
@@ -2357,6 +2367,8 @@ function renderPomodoroTimer(container) {
     function resetTimer() {
         clearInterval(timer);
         isRunning = false;
+        sessionSaved = false;
+        clientSessionId = null;
         currentPhase = "focus";
         // Re-read settings in case user changed them
         focusDuration = parseInt(focusInput?.value) || 25;
@@ -2366,6 +2378,8 @@ function renderPomodoroTimer(container) {
         updateDisplay();
         updatePhaseLabel();
         updateStartPauseButton();
+        // Refresh from backend to ensure stats are current
+        refreshAllStats();
     }
 
     function updateDisplay() {
@@ -2381,27 +2395,27 @@ function renderPomodoroTimer(container) {
             longbreak: "Long Break"
         };
         sessionLabelDisplay.textContent = labels[currentPhase];
-        // Calculate cycle position (1-4) based on total sessions from backend
-        let cyclePosition = sessionCount % 4;
-        if (cyclePosition === 0 && sessionCount > 0) {
-            cyclePosition = 4; // Show 4/4 when at the end of a cycle
-        }
-        if (cyclePosition === 0 && sessionCount === 0) {
-            cyclePosition = 1; // Starting position
+        
+        // Calculate cycle position (1-4) based on backend totalSessions
+        const total = backendStats.totalSessions || 0;
+        let cyclePosition = total % 4;
+        if (cyclePosition === 0 && total > 0) {
+            cyclePosition = 4; // At end of cycle (4/4)
+        } else if (cyclePosition === 0 && total === 0) {
+            cyclePosition = 1; // Starting position (1/4)
         }
         cycleTextDisplay.textContent = `${cyclePosition} / 4 sessions until long break`;
     }
 
     function updateStats() {
-        totalExpDisplay.textContent = totalExp;
-        // Sessions completed = total sessions (each focus session counts as 1)
-        totalSetsDisplay.textContent = sessionCount;
-        totalFocusTimeDisplay.textContent = totalFocusMinutes + " min";
-        updateLevelUI(totalExp);
-        updatePhaseLabel(); // Ensure cycle counter stays in sync
+        // Render from backend state only
+        totalExpDisplay.textContent = backendStats.xp || 0;
+        totalSetsDisplay.textContent = backendStats.totalSessions || 0;
+        totalFocusTimeDisplay.textContent = (backendStats.totalMinutes || 0) + " min";
+        updateLevelUI(backendStats.xp || 0);
     }
 
-    async function saveSessionToBackend(duration) {
+    async function saveSessionToBackend(duration, sessionId) {
         try {
             const res = await fetch('https://student-life-backend-1.onrender.com/api/focus-sessions', {
                 method: 'POST',
@@ -2410,7 +2424,10 @@ function renderPomodoroTimer(container) {
                     'Content-Type': 'application/json'
                 },
                 cache: 'no-store',
-                body: JSON.stringify({ duration: duration })
+                body: JSON.stringify({ 
+                    duration: duration,
+                    clientSessionId: sessionId // For backend deduplication
+                })
             });
 
             if (res.status === 401) {
@@ -2419,14 +2436,19 @@ function renderPomodoroTimer(container) {
                 return;
             }
 
-            if (res.ok) {
-                await loadStats();
-                // Also update XP from backend
-                await loadXP();
+            // Successfully saved (or duplicate detected by backend)
+            if (res.ok || res.status === 409) { // 409 = duplicate
+                return true;
             }
         } catch (err) {
             console.error('[Focus Timer] Failed to save session:', err);
         }
+        return false;
+    }
+
+    // Refresh all stats from backend in one coordinated call
+    async function refreshAllStats() {
+        await Promise.all([loadStats(), loadXP()]);
     }
 
     async function loadXP() {
@@ -2448,9 +2470,9 @@ function renderPomodoroTimer(container) {
             const result = await res.json();
             const data = result.data || result || {};
 
-            // Update XP from backend
+            // Update backend state cache
             if (data.xp !== undefined) {
-                totalExp = data.xp;
+                backendStats.xp = data.xp;
                 updateStats();
             }
         } catch (err) {
@@ -2477,10 +2499,9 @@ function renderPomodoroTimer(container) {
             const result = await res.json();
             const data = result.data || result || {};
 
-            // Backend is source of truth for all stats
-            sessionCount = data.totalSessions || 0;
-            totalFocusMinutes = data.totalMinutes || 0;
-            // EXP is loaded separately from /api/xp
+            // Update backend state cache
+            backendStats.totalSessions = data.totalSessions || 0;
+            backendStats.totalMinutes = data.totalMinutes || 0;
 
             updateStats();
             updatePhaseLabel();
@@ -2497,12 +2518,28 @@ function renderPomodoroTimer(container) {
 
     async function resetStats() {
         if (confirm("Reset all your stats? This cannot be undone.")) {
-            // Note: Backend doesn't have a reset endpoint yet, so we just clear local state
-            // The backend will continue to store sessions
-            totalExp = 0;
-            sessionCount = 0;
-            totalFocusMinutes = 0;
-            updateStats();
+            // Backend is source of truth - try to call reset endpoint
+            try {
+                const res = await fetch('https://student-life-backend-1.onrender.com/api/focus-stats/reset', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (res.status === 401) {
+                    clearAllUserState();
+                    window.location.replace('index.html');
+                    return;
+                }
+            } catch (err) {
+                console.log('[Focus Timer] Reset endpoint not available, local reset only');
+            }
+            
+            // Clear local backend cache and re-fetch
+            backendStats = { totalSessions: 0, totalMinutes: 0, xp: 0 };
+            await refreshAllStats();
         }
     }
 
@@ -2510,6 +2547,12 @@ function renderPomodoroTimer(container) {
     startPauseBtn.addEventListener('click', startPause);
     resetBtn.addEventListener('click', resetTimer);
     skipBtn.addEventListener('click', () => {
+        // Just switch phase and timer, don't reset stats
+        clearInterval(timer);
+        isRunning = false;
+        sessionSaved = false;
+        clientSessionId = null;
+        
         if (currentPhase === "focus") {
             currentPhase = "shortbreak";
             timeLeft = shortBreakDuration * 60;
@@ -2517,15 +2560,16 @@ function renderPomodoroTimer(container) {
             currentPhase = "focus";
             timeLeft = focusDuration * 60;
         }
-        resetTimer();
+        
+        updateDisplay();
         updatePhaseLabel();
+        updateStartPauseButton();
     });
 
     resetStatsBtn.addEventListener('click', resetStats);
 
-    // Load stats on page load
-    loadStats();
-    loadXP();
+    // Load stats on page load (await to ensure data before first render)
+    await refreshAllStats();
     updateDisplay();
     updatePhaseLabel();
 }
