@@ -2265,6 +2265,7 @@ function renderPomodoroTimer(container) {
     let totalExp = 0;
     let totalFocusMinutes = 0;
     let currentPhase = "focus";
+    let sessionSaved = false; // Prevent duplicate XP calls
 
     function startPause() {
         if (isRunning) {
@@ -2272,8 +2273,9 @@ function renderPomodoroTimer(container) {
             isRunning = false;
         } else {
             isRunning = true;
+            sessionSaved = false; // Reset flag when starting new session
             timer = setInterval(() => {
-                if (timeLeft <= 0) {
+                if (timeLeft <= 0 && !sessionSaved) {
                     clearInterval(timer);
                     isRunning = false;
                     onSessionComplete();
@@ -2302,6 +2304,10 @@ function renderPomodoroTimer(container) {
         clearInterval(timer);
         isRunning = false;
 
+        // Prevent duplicate saves
+        if (sessionSaved) return;
+        sessionSaved = true;
+
         if (currentPhase === "focus") {
             const actualFocusDuration = Math.floor((focusDuration * 60 - timeLeft) / 60);
             const durationToSave = actualFocusDuration > 0 ? actualFocusDuration : focusDuration;
@@ -2315,17 +2321,10 @@ function renderPomodoroTimer(container) {
                 });
             }
 
-            // Save to backend and refresh stats
+            // Save to backend and refresh stats (backend is source of truth)
             await saveSessionToBackend(durationToSave);
 
-            // Update local stats immediately for responsive UI
-            sessionCount++;
-            totalFocusMinutes += durationToSave;
-            // EXP is now loaded from backend in saveSessionToBackend
-
-            updateStats();
-
-            // Switch to break phase
+            // Switch to break phase based on updated session count
             if (sessionCount % 4 === 0) {
                 currentPhase = "longbreak";
                 timeLeft = longBreakDuration * 60;
@@ -2382,14 +2381,24 @@ function renderPomodoroTimer(container) {
             longbreak: "Long Break"
         };
         sessionLabelDisplay.textContent = labels[currentPhase];
-        cycleTextDisplay.textContent = `${sessionCount % 4} / 4 sessions until long break`;
+        // Calculate cycle position (1-4) based on total sessions from backend
+        let cyclePosition = sessionCount % 4;
+        if (cyclePosition === 0 && sessionCount > 0) {
+            cyclePosition = 4; // Show 4/4 when at the end of a cycle
+        }
+        if (cyclePosition === 0 && sessionCount === 0) {
+            cyclePosition = 1; // Starting position
+        }
+        cycleTextDisplay.textContent = `${cyclePosition} / 4 sessions until long break`;
     }
 
     function updateStats() {
         totalExpDisplay.textContent = totalExp;
-        totalSetsDisplay.textContent = Math.floor(sessionCount / 4);
+        // Sessions completed = total sessions (each focus session counts as 1)
+        totalSetsDisplay.textContent = sessionCount;
         totalFocusTimeDisplay.textContent = totalFocusMinutes + " min";
         updateLevelUI(totalExp);
+        updatePhaseLabel(); // Ensure cycle counter stays in sync
     }
 
     async function saveSessionToBackend(duration) {
@@ -2468,12 +2477,13 @@ function renderPomodoroTimer(container) {
             const result = await res.json();
             const data = result.data || result || {};
 
+            // Backend is source of truth for all stats
             sessionCount = data.totalSessions || 0;
             totalFocusMinutes = data.totalMinutes || 0;
-            // Calculate EXP: 10 per session + 20 bonus per 4 sessions
-            totalExp = (sessionCount * 10) + (Math.floor(sessionCount / 4) * 20);
+            // EXP is loaded separately from /api/xp
 
             updateStats();
+            updatePhaseLabel();
         } catch (err) {
             console.error('[Focus Timer] Failed to load stats:', err);
         }
