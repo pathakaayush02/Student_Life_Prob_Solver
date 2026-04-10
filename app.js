@@ -2365,21 +2365,20 @@ async function renderPomodoroTimer(container) {
     }
 
     function resetTimer() {
+        // Timer reset ONLY resets UI - does NOT touch backend stats
         clearInterval(timer);
         isRunning = false;
         sessionSaved = false;
         clientSessionId = null;
+        
+        // Reset to focus phase with current settings
         currentPhase = "focus";
-        // Re-read settings in case user changed them
         focusDuration = parseInt(focusInput?.value) || 25;
-        shortBreakDuration = parseInt(shortBreakInput?.value) || 5;
-        longBreakDuration = parseInt(longBreakInput?.value) || 15;
         timeLeft = focusDuration * 60;
+        
         updateDisplay();
         updatePhaseLabel();
         updateStartPauseButton();
-        // Refresh from backend to ensure stats are current
-        refreshAllStats();
     }
 
     function updateDisplay() {
@@ -2518,13 +2517,12 @@ async function renderPomodoroTimer(container) {
 
     async function resetStats() {
         if (confirm("Reset all your stats? This cannot be undone.")) {
-            // Backend is source of truth - try to call reset endpoint
             try {
-                const res = await fetch('https://student-life-backend-1.onrender.com/api/focus-stats/reset', {
-                    method: 'POST',
+                // Call backend reset endpoint (DELETE /api/focus-reset)
+                const res = await fetch('https://student-life-backend-1.onrender.com/api/focus-reset', {
+                    method: 'DELETE',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+                        'Authorization': `Bearer ${token}`
                     }
                 });
                 
@@ -2533,13 +2531,18 @@ async function renderPomodoroTimer(container) {
                     window.location.replace('index.html');
                     return;
                 }
+                
+                if (!res.ok) {
+                    console.error('[Focus Timer] Reset failed:', res.status);
+                }
             } catch (err) {
-                console.log('[Focus Timer] Reset endpoint not available, local reset only');
+                console.error('[Focus Timer] Reset failed:', err);
             }
             
-            // Clear local backend cache and re-fetch
+            // Reload fresh data from backend (force refresh)
             backendStats = { totalSessions: 0, totalMinutes: 0, xp: 0 };
-            await refreshAllStats();
+            await loadStats();
+            await loadXP();
         }
     }
 
