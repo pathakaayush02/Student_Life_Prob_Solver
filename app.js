@@ -2099,24 +2099,17 @@ async function renderPomodoroTimer(container) {
                 <div class="card">
                     <h3>Session Stats</h3>
                     <div style="text-align:center; padding:16px 0;">
-
   <div style="font-size:13px; font-weight:600; color:#b8960c; letter-spacing:1px; margin-bottom:4px;" id="exp-level-num">Level 1</div>
-
   <div style="font-size:22px; font-weight:700; color:var(--text-primary); margin-bottom:2px;" id="exp-level-title">Freshman</div>
-
   <div style="width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,#b8960c,#7a6200); display:flex; align-items:center; justify-content:center; margin:12px auto; flex-direction:column;">
     <span style="font-size:24px; font-weight:700; color:white;" id="totalExpDisplay">0</span>
     <span style="font-size:10px; color:rgba(255,255,255,0.8);">EXP</span>
   </div>
-
   <div style="margin:12px 0 4px; font-size:12px; color:var(--text-muted);" id="exp-bar-text">0 / 100 EXP</div>
-
   <div style="background:var(--border-color); border-radius:10px; height:8px; overflow:hidden; margin:0 8px;">
     <div id="exp-progress-bar" style="height:100%; width:0%; background:linear-gradient(90deg,#b8960c,#f0c040); border-radius:10px; transition:width 0.5s ease;"></div>
   </div>
-
   <div style="font-size:12px; color:var(--text-muted); margin-top:8px;">Next level progress</div>
-
 </div>
                     
                     <div style="background: var(--bg-soft-highlight); padding: 1rem; border-radius: var(--radius-button); margin-bottom: 1rem;">
@@ -2172,277 +2165,508 @@ async function renderPomodoroTimer(container) {
 
     const BASE_URL = 'https://student-life-backend-1.onrender.com';
 
-    // Clean state - backend is source of truth
-    let timerInterval = null;
-    let isRunning = false;
-    let currentMode = "focus"; // "focus" or "break"
-    let sessionSaved = false;
-    let focusDuration = parseInt(focusInput?.value) || 25;
-    let shortBreakDuration = parseInt(shortBreakInput?.value) || 5;
-    let longBreakDuration = parseInt(longBreakInput?.value) || 15;
-    let timeLeft = focusDuration * 60;
+    // ==========================================
+    // PRODUCTION-READY STATE MANAGEMENT
+    // ==========================================
+    
+    // Core timer state - minimal and clean
+    const state = {
+        timerInterval: null,
+        isRunning: false,
+        currentMode: "focus",
+        sessionSaved: false,
+        savingInProgress: false,
+        currentSessionId: null,
+        focusDuration: parseInt(focusInput?.value) || 25,
+        shortBreakDuration: parseInt(shortBreakInput?.value) || 5,
+        longBreakDuration: parseInt(longBreakInput?.value) || 15,
+        timeLeft: (parseInt(focusInput?.value) || 25) * 60
+    };
 
-    // Sound alert
-    function playSound() {
+    // Backend data cache - single source of truth
+    const backendData = {
+        totalSessions: 0,
+        totalMinutes: 0,
+        xp: 0
+    };
+
+    // ==========================================
+    // AUDIO & NOTIFICATIONS
+    // ==========================================
+    
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playAlarmSound() {
         try {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            oscillator.frequency.value = 800;
-            oscillator.type = 'sine';
-            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-            oscillator.start(audioCtx.currentTime);
-            oscillator.stop(audioCtx.currentTime + 0.5);
-            setTimeout(() => {
-                const osc2 = audioCtx.createOscillator();
-                const gain2 = audioCtx.createGain();
-                osc2.connect(gain2);
-                gain2.connect(audioCtx.destination);
-                osc2.frequency.value = 800;
-                osc2.type = 'sine';
-                gain2.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-                osc2.start(audioCtx.currentTime);
-                osc2.stop(audioCtx.currentTime + 0.5);
-            }, 200);
-        } catch (e) { console.error('Audio play failed:', e); }
-    }
-
-    function showNotification() {
-        if (Notification.permission === "granted") {
-            new Notification(currentMode === "focus" ? "Focus Session Complete! 🎉" : "Break Over! 💪", {
-                body: currentMode === "focus" ? "Great job! Time for a break." : "Ready to focus again?",
-                icon: "logo.png"
-            });
+            const now = audioContext.currentTime;
+            
+            // First beep
+            const osc1 = audioContext.createOscillator();
+            const gain1 = audioContext.createGain();
+            osc1.connect(gain1);
+            gain1.connect(audioContext.destination);
+            osc1.frequency.value = 880;
+            osc1.type = 'sine';
+            gain1.gain.setValueAtTime(0.4, now);
+            gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            osc1.start(now);
+            osc1.stop(now + 0.3);
+            
+            // Second beep
+            const osc2 = audioContext.createOscillator();
+            const gain2 = audioContext.createGain();
+            osc2.connect(gain2);
+            gain2.connect(audioContext.destination);
+            osc2.frequency.value = 880;
+            osc2.type = 'sine';
+            gain2.gain.setValueAtTime(0.4, now + 0.35);
+            gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.65);
+            osc2.start(now + 0.35);
+            osc2.stop(now + 0.65);
+            
+            // Third beep
+            const osc3 = audioContext.createOscillator();
+            const gain3 = audioContext.createGain();
+            osc3.connect(gain3);
+            gain3.connect(audioContext.destination);
+            osc3.frequency.value = 1100;
+            osc3.type = 'sine';
+            gain3.gain.setValueAtTime(0.5, now + 0.7);
+            gain3.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
+            osc3.start(now + 0.7);
+            osc3.stop(now + 1.0);
+            
+        } catch (e) { 
+            console.error('[Focus Timer] Audio play failed:', e); 
         }
     }
 
-    // Update display
+    function showNotification(title, body) {
+        if (Notification.permission === "granted") {
+            try {
+                new Notification(title, {
+                    body: body,
+                    icon: "logo.png",
+                    badge: "logo.png",
+                    tag: 'focus-timer-' + Date.now()
+                });
+            } catch (e) {
+                console.error('[Focus Timer] Notification failed:', e);
+            }
+        }
+    }
+
+    // ==========================================
+    // UI UPDATES
+    // ==========================================
+    
     function updateDisplay() {
-        const mins = Math.floor(timeLeft / 60).toString().padStart(2, "0");
-        const secs = (timeLeft % 60).toString().padStart(2, "0");
+        const mins = Math.floor(state.timeLeft / 60).toString().padStart(2, "0");
+        const secs = (state.timeLeft % 60).toString().padStart(2, "0");
         timeLeftDisplay.textContent = `${mins}:${secs}`;
     }
 
     function updateButton() {
-        startPauseBtn.innerHTML = isRunning 
-            ? '<i data-lucide="pause" width="20" height="20" style="margin-right: 0.5rem;"></i>Pause'
-            : '<i data-lucide="play" width="20" height="20" style="margin-right: 0.5rem;"></i>Start';
+        const icon = state.isRunning ? 'pause' : 'play';
+        const text = state.isRunning ? 'Pause' : 'Start';
+        startPauseBtn.innerHTML = `<i data-lucide="${icon}" width="20" height="20" style="margin-right: 0.5rem;"></i>${text}`;
         if (typeof lucide !== 'undefined') lucide.createIcons();
+        
+        startPauseBtn.style.opacity = state.savingInProgress ? '0.6' : '1';
+        startPauseBtn.style.pointerEvents = state.savingInProgress ? 'none' : 'auto';
     }
 
-    function updatePhaseLabel(sessionsCompleted = 0) {
-        sessionLabelDisplay.textContent = currentMode === "focus" ? "Focus Session" : "Break";
-        let cyclePosition = sessionsCompleted % 4;
-        if (cyclePosition === 0 && sessionsCompleted > 0) cyclePosition = 4;
-        if (cyclePosition === 0 && sessionsCompleted === 0) cyclePosition = 1;
+    function updatePhaseLabel() {
+        const labels = {
+            focus: "Focus Session",
+            break: "Break"
+        };
+        sessionLabelDisplay.textContent = labels[state.currentMode] || "Break";
+        
+        const sessions = backendData.totalSessions;
+        let cyclePosition = sessions % 4;
+        if (cyclePosition === 0 && sessions > 0) cyclePosition = 4;
+        if (cyclePosition === 0 && sessions === 0) cyclePosition = 1;
+        
         cycleTextDisplay.textContent = `${cyclePosition} / 4 sessions until long break`;
+        
+        // Update dots
+        const dots = document.querySelectorAll('#cycleDots > div');
+        dots.forEach((dot, index) => {
+            dot.style.background = index < cyclePosition ? 'var(--color-primary)' : 'var(--color-border)';
+        });
     }
 
-    // Load stats from backend
+    function updateStatsUI() {
+        totalSetsDisplay.textContent = backendData.totalSessions;
+        totalFocusTimeDisplay.textContent = backendData.totalMinutes + " min";
+        totalExpDisplay.textContent = backendData.xp;
+        updateLevelUI(backendData.xp);
+    }
+
+    function flashScreen() {
+        document.body.style.transition = "background 0.4s ease";
+        document.body.style.background = "linear-gradient(135deg, #fffbe6, #fff5d6)";
+        setTimeout(() => {
+            document.body.style.background = "";
+        }, 800);
+    }
+
+    // ==========================================
+    // BACKEND API CALLS
+    // ==========================================
+    
+    async function apiCall(endpoint, options = {}) {
+        const url = `${BASE_URL}${endpoint}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        
+        try {
+            const res = await fetch(url, {
+                ...options,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    ...(options.headers || {})
+                },
+                cache: 'no-store',
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (res.status === 401) {
+                localStorage.clear();
+                window.location.replace('index.html');
+                throw new Error('Unauthorized');
+            }
+            
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`HTTP ${res.status}: ${errorText}`);
+            }
+            
+            return await res.json();
+        } catch (err) {
+            clearTimeout(timeoutId);
+            if (err.name === 'AbortError') {
+                throw new Error('Request timeout');
+            }
+            throw err;
+        }
+    }
+
     async function loadStats() {
         try {
-            const res = await fetch(`${BASE_URL}/api/focus-stats`, {
-                headers: { 'Authorization': `Bearer ${token}` },
-                cache: 'no-store'
-            });
-            if (res.status === 401) { localStorage.clear(); window.location.replace('index.html'); return; }
-            const data = await res.json();
+            const data = await apiCall('/api/focus-stats');
             const stats = data.data || data || {};
-            totalSetsDisplay.textContent = stats.totalSessions || 0;
-            totalFocusTimeDisplay.textContent = (stats.totalMinutes || 0) + " min";
-            updatePhaseLabel(stats.totalSessions || 0);
-            return stats;
+            
+            backendData.totalSessions = stats.totalSessions || 0;
+            backendData.totalMinutes = stats.totalMinutes || 0;
+            
+            updateStatsUI();
+            updatePhaseLabel();
+            
+            return backendData;
         } catch (err) {
             console.error('[Focus Timer] Failed to load stats:', err);
-            return { totalSessions: 0, totalMinutes: 0 };
+            return backendData;
         }
     }
 
-    // Load XP from backend
     async function loadXP() {
         try {
-            const res = await fetch(`${BASE_URL}/api/xp`, {
-                headers: { 'Authorization': `Bearer ${token}` },
-                cache: 'no-store'
-            });
-            if (res.status === 401) { localStorage.clear(); window.location.replace('index.html'); return; }
-            const data = await res.json();
+            const data = await apiCall('/api/xp');
             const xp = data.xp || 0;
-            totalExpDisplay.textContent = xp;
-            updateLevelUI(xp);
-            return data;
+            
+            backendData.xp = xp;
+            updateStatsUI();
+            
+            return { xp };
         } catch (err) {
             console.error('[Focus Timer] Failed to load XP:', err);
-            return { xp: 0 };
+            return { xp: backendData.xp };
         }
     }
 
-    // Handle session end
-    async function handleSessionEnd() {
-        playSound();
-        showNotification();
-
-        if (currentMode === "focus" && !sessionSaved) {
-            sessionSaved = true;
-
-            // Save to backend
-            await fetch(`${BASE_URL}/api/focus-sessions`, {
+    async function saveFocusSession(duration, sessionId) {
+        try {
+            const data = await apiCall('/api/focus-sessions', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
                 body: JSON.stringify({
-                    duration: focusDuration,
-                    clientSessionId: Date.now().toString()
+                    duration: duration,
+                    clientSessionId: sessionId,
+                    timestamp: new Date().toISOString()
                 })
             });
-
-            // Reload from backend
-            const stats = await loadStats();
-            await loadXP();
-
-            // Switch to break (long break every 4 sessions)
-            const sessions = stats.totalSessions || 0;
-            if (sessions % 4 === 0) {
-                currentMode = "break";
-                timeLeft = longBreakDuration * 60;
-            } else {
-                currentMode = "break";
-                timeLeft = shortBreakDuration * 60;
+            
+            console.log('[Focus Timer] Session saved:', data);
+            return { success: true, data };
+        } catch (err) {
+            if (err.message && err.message.includes('409')) {
+                console.log('[Focus Timer] Session already saved (duplicate)');
+                return { success: true, duplicate: true };
             }
-        } else if (currentMode === "break") {
-            // Break over, back to focus
-            currentMode = "focus";
-            timeLeft = focusDuration * 60;
+            
+            console.error('[Focus Timer] Failed to save session:', err);
+            return { success: false, error: err.message };
         }
+    }
 
-        sessionSaved = false;
-        isRunning = false;
+    async function resetBackendStats() {
+        try {
+            await apiCall('/api/focus-reset', { method: 'DELETE' });
+            console.log('[Focus Timer] Stats reset successfully');
+            return { success: true };
+        } catch (err) {
+            console.error('[Focus Timer] Failed to reset stats:', err);
+            return { success: false, error: err.message };
+        }
+    }
+
+    // ==========================================
+    // SESSION COMPLETION (ATOMIC OPERATION)
+    // ==========================================
+    
+    async function handleSessionComplete() {
+        // CRITICAL: Prevent duplicate processing
+        if (state.sessionSaved || state.savingInProgress) {
+            console.log('[Focus Timer] Session already being processed, skipping');
+            return;
+        }
+        
+        state.savingInProgress = true;
+        state.sessionSaved = true;
+        state.isRunning = false;
+        
+        updateButton();
+        playAlarmSound();
+        
+        if (state.currentMode === "focus") {
+            // FOCUS SESSION COMPLETION
+            showNotification(
+                "Focus Session Complete! 🎉", 
+                `Great job! You completed ${state.focusDuration} minutes of focused work. Time for a break!`
+            );
+            
+            // Save to backend
+            await saveFocusSession(state.focusDuration, state.currentSessionId);
+            
+            // Reload stats from backend
+            await Promise.all([loadStats(), loadXP()]);
+            
+            // Switch to break
+            const sessions = backendData.totalSessions;
+            const isLongBreak = sessions > 0 && sessions % 4 === 0;
+            
+            state.currentMode = "break";
+            state.timeLeft = isLongBreak ? state.longBreakDuration * 60 : state.shortBreakDuration * 60;
+            
+            console.log(`[Focus Timer] Switching to ${isLongBreak ? 'long' : 'short'} break after session ${sessions}`);
+            
+        } else {
+            // BREAK SESSION COMPLETION
+            showNotification(
+                "Break Over! 💪", 
+                "Your break is complete. Ready to focus again?"
+            );
+            
+            state.currentMode = "focus";
+            state.timeLeft = state.focusDuration * 60;
+            
+            console.log('[Focus Timer] Break complete, switching to focus');
+        }
+        
+        // Reset for next session
+        state.currentSessionId = null;
+        state.savingInProgress = false;
+        
+        // Final UI updates
         updateDisplay();
         updateButton();
         updatePhaseLabel();
-
-        // Flash screen
-        document.body.style.transition = "background 0.3s";
-        document.body.style.background = "#fffbe6";
-        setTimeout(() => document.body.style.background = "", 600);
+        flashScreen();
     }
 
-    // Timer control
+    // ==========================================
+    // TIMER CONTROLS
+    // ==========================================
+    
     function startTimer() {
-        if (isRunning) return;
-        isRunning = true;
-        sessionSaved = false;
-
-        timerInterval = setInterval(async () => {
-            timeLeft--;
+        if (state.isRunning || state.savingInProgress) {
+            console.log('[Focus Timer] Cannot start: already running or saving');
+            return;
+        }
+        
+        // Generate unique session ID for focus sessions
+        if (state.currentMode === "focus" && !state.currentSessionId) {
+            state.currentSessionId = `focus-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            state.sessionSaved = false;
+            console.log('[Focus Timer] New focus session started:', state.currentSessionId);
+        }
+        
+        state.isRunning = true;
+        
+        state.timerInterval = setInterval(() => {
+            state.timeLeft--;
             updateDisplay();
-
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                isRunning = false;
-                await handleSessionEnd();
+            
+            if (state.timeLeft <= 0) {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+                handleSessionComplete();
             }
         }, 1000);
-
+        
         updateButton();
     }
 
     function pauseTimer() {
-        clearInterval(timerInterval);
-        isRunning = false;
+        if (!state.isRunning) return;
+        
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
+        state.isRunning = false;
+        
         updateButton();
+        console.log('[Focus Timer] Paused');
     }
 
     function toggleTimer() {
-        if (isRunning) pauseTimer();
+        if (state.isRunning) pauseTimer();
         else startTimer();
     }
 
-    // Reset timer UI only
     function resetTimer() {
-        clearInterval(timerInterval);
-        isRunning = false;
-        sessionSaved = false;
-
-        if (currentMode === "focus") {
-            timeLeft = focusDuration * 60;
-        } else {
-            timeLeft = shortBreakDuration * 60;
-        }
-
-        updateDisplay();
-        updateButton();
-    }
-
-    // Reset stats via backend
-    async function resetStats() {
-        if (!confirm("Reset all your stats? This cannot be undone.")) return;
+        // Stop timer
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
+        state.isRunning = false;
+        state.sessionSaved = false;
+        state.savingInProgress = false;
+        state.currentSessionId = null;
         
-        try {
-            await fetch(`${BASE_URL}/api/focus-reset`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-        } catch (err) {
-            console.error('[Focus Timer] Reset failed:', err);
-        }
-
-        // Force reload
-        await loadStats();
-        await loadXP();
-    }
-
-    // Settings change handlers
-    focusInput?.addEventListener('change', () => {
-        focusDuration = parseInt(focusInput.value) || 25;
-        if (currentMode === 'focus' && !isRunning) {
-            timeLeft = focusDuration * 60;
-            updateDisplay();
-        }
-    });
-
-    shortBreakInput?.addEventListener('change', () => {
-        shortBreakDuration = parseInt(shortBreakInput.value) || 5;
-    });
-
-    longBreakInput?.addEventListener('change', () => {
-        longBreakDuration = parseInt(longBreakInput.value) || 15;
-    });
-
-    // Event listeners
-    startPauseBtn.addEventListener('click', toggleTimer);
-    resetBtn.addEventListener('click', resetTimer);
-    resetStatsBtn.addEventListener('click', resetStats);
-    skipBtn.addEventListener('click', () => {
-        clearInterval(timerInterval);
-        isRunning = false;
-        sessionSaved = false;
-        
-        if (currentMode === "focus") {
-            currentMode = "break";
-            timeLeft = shortBreakDuration * 60;
+        // Reset time based on current mode
+        if (state.currentMode === "focus") {
+            state.timeLeft = state.focusDuration * 60;
         } else {
-            currentMode = "focus";
-            timeLeft = focusDuration * 60;
+            const sessions = backendData.totalSessions;
+            const isLongBreakSlot = sessions > 0 && sessions % 4 === 0;
+            state.timeLeft = isLongBreakSlot ? state.longBreakDuration * 60 : state.shortBreakDuration * 60;
         }
         
         updateDisplay();
         updateButton();
         updatePhaseLabel();
+        
+        console.log('[Focus Timer] Timer reset');
+    }
+
+    async function resetStats() {
+        if (!confirm("Reset all your stats? This cannot be undone.")) return;
+        
+        const result = await resetBackendStats();
+        
+        if (result.success) {
+            backendData.totalSessions = 0;
+            backendData.totalMinutes = 0;
+            backendData.xp = 0;
+            
+            await Promise.all([loadStats(), loadXP()]);
+            resetTimer();
+            
+            console.log('[Focus Timer] Stats reset complete');
+        } else {
+            alert('Failed to reset stats. Please try again.');
+        }
+    }
+
+    // ==========================================
+    // SETTINGS HANDLERS
+    // ==========================================
+    
+    focusInput?.addEventListener('change', () => {
+        const newDuration = parseInt(focusInput.value);
+        if (newDuration >= 1 && newDuration <= 120) {
+            state.focusDuration = newDuration;
+            if (state.currentMode === 'focus' && !state.isRunning) {
+                state.timeLeft = state.focusDuration * 60;
+                updateDisplay();
+            }
+        }
     });
 
-    // Initial load
-    await loadStats();
-    await loadXP();
+    shortBreakInput?.addEventListener('change', () => {
+        const newDuration = parseInt(shortBreakInput.value);
+        if (newDuration >= 1 && newDuration <= 60) {
+            state.shortBreakDuration = newDuration;
+        }
+    });
+
+    longBreakInput?.addEventListener('change', () => {
+        const newDuration = parseInt(longBreakInput.value);
+        if (newDuration >= 1 && newDuration <= 120) {
+            state.longBreakDuration = newDuration;
+        }
+    });
+
+    // ==========================================
+    // EVENT LISTENERS
+    // ==========================================
+    
+    startPauseBtn.addEventListener('click', toggleTimer);
+    resetBtn.addEventListener('click', resetTimer);
+    resetStatsBtn.addEventListener('click', resetStats);
+    
+    skipBtn.addEventListener('click', () => {
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
+        state.isRunning = false;
+        state.sessionSaved = false;
+        state.currentSessionId = null;
+        
+        if (state.currentMode === "focus") {
+            state.currentMode = "break";
+            const sessions = backendData.totalSessions;
+            const isLongBreakSlot = sessions > 0 && sessions % 4 === 0;
+            state.timeLeft = isLongBreakSlot ? state.longBreakDuration * 60 : state.shortBreakDuration * 60;
+        } else {
+            state.currentMode = "focus";
+            state.timeLeft = state.focusDuration * 60;
+        }
+        
+        updateDisplay();
+        updateButton();
+        updatePhaseLabel();
+        
+        console.log('[Focus Timer] Phase skipped to:', state.currentMode);
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
+            e.preventDefault();
+            toggleTimer();
+        }
+        if (e.code === 'KeyR' && e.target.tagName !== 'INPUT') {
+            e.preventDefault();
+            resetTimer();
+        }
+    });
+
+    // ==========================================
+    // INITIALIZATION
+    // ==========================================
+    
+    console.log('[Focus Timer] Initializing...');
+    
+    await Promise.all([loadStats(), loadXP()]);
+    
     updateDisplay();
     updateButton();
     updatePhaseLabel();
+    
+    console.log('[Focus Timer] Ready. Backend state:', backendData);
 }
 
 function renderClutchAI(container) {
