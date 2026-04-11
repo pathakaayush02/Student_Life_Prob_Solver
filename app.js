@@ -14,6 +14,21 @@
  * - slps_career_saved: Array of saved career objects
  */
 
+/**
+ * Escape HTML special characters to prevent XSS attacks
+ * @param {string} text - Raw text input
+ * @returns {string} Escaped HTML-safe string
+ */
+function escapeHtml(text) {
+    if (typeof text !== 'string') return '';
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize core components
     initNavigation();
@@ -493,31 +508,35 @@ function renderStudyPlanner(container) {
                                             plan.status === 'in-progress' ? 'primary' : 'muted';
                     const isCompleted = plan.status === 'completed';
 
+                    const safeId = escapeHtml(plan._id || plan.id || '');
+                    const safeTitle = escapeHtml(plan.title || '');
+                    const safeSubject = escapeHtml(plan.subject || '');
+                    const safeStatus = escapeHtml(plan.status || 'pending');
                     div.innerHTML = `
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 1rem;">
                                 <button class="btn btn-ghost" style="padding: 0.5rem; min-width: auto;"
-                                        onclick="markStudyPlanDone('${plan._id || plan.id}')"
-                                        aria-label="Mark ${plan.title} as completed"
+                                        onclick="markStudyPlanDone('${safeId}')"
+                                        aria-label="Mark ${safeTitle} as completed"
                                         ${isCompleted ? 'disabled' : ''}>
                                     <i data-lucide="${isCompleted ? 'check-circle' : 'circle'}" width="20" height="20"
                                        style="color: ${isCompleted ? 'var(--color-success)' : 'var(--color-muted)'}"></i>
                                 </button>
                                 <div>
                                     <div style="font-weight: 600; color: ${isCompleted ? 'var(--color-muted)' : 'var(--color-heading)'}">
-                                        ${plan.title}
+                                        ${safeTitle}
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; flex-wrap: wrap;">
-                                        <span class="text-muted">${plan.subject}</span>
+                                        <span class="text-muted">${safeSubject}</span>
                                         <span class="text-muted">•</span>
                                         <span class="text-muted">${plan.targetHours} hours</span>
-                                        <span class="badge badge-${statusBadgeColor}" style="font-size: 0.75rem; text-transform: capitalize;">${plan.status}</span>
+                                        <span class="badge badge-${statusBadgeColor}" style="font-size: 0.75rem; text-transform: capitalize;">${safeStatus}</span>
                                     </div>
                                 </div>
                             </div>
                             <button class="btn btn-ghost" style="color: var(--color-danger);"
-                                    onclick="deleteStudyPlan('${plan._id || plan.id}')"
-                                    aria-label="Delete ${plan.title}">
+                                    onclick="deleteStudyPlan('${safeId}')"
+                                    aria-label="Delete ${safeTitle}">
                                 <i data-lucide="trash-2" width="16" height="16"></i>
                             </button>
                         </div>
@@ -948,20 +967,23 @@ function renderExpenseTracker(container) {
                     const div = document.createElement('div');
                     div.className = 'card';
                     div.style.marginBottom = '1rem';
+                    const safeId = escapeHtml(exp._id || exp.id || '');
+                    const safeName = escapeHtml(exp.name || '');
+                    const safeCategory = escapeHtml(exp.category || '');
                     div.innerHTML = `
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div>
                                 <div style="font-weight: 600; color: var(--color-heading); margin-bottom: 0.25rem;">
-                                    ${exp.name}
+                                    ${safeName}
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 1rem;">
-                                    <span class="badge badge-primary" style="font-size: 0.75rem;">${exp.category}</span>
+                                    <span class="badge badge-primary" style="font-size: 0.75rem;">${safeCategory}</span>
                                     <span style="font-weight: 700; color: var(--color-heading);">₹${parseFloat(exp.amount).toFixed(2)}</span>
                                 </div>
                             </div>
                             <button class="btn btn-ghost" style="color: var(--color-danger);"
-                                    onclick="deleteExpense('${exp._id || exp.id}')"
-                                    aria-label="Delete ${exp.name}">
+                                    onclick="deleteExpense('${safeId}')"
+                                    aria-label="Delete ${safeName}">
                                 <i data-lucide="trash-2" width="16" height="16"></i>
                             </button>
                         </div>
@@ -1169,7 +1191,6 @@ function renderStressChecker(container) {
     const questionsContainer = document.getElementById('stressQuestions');
     const form = document.getElementById('stressForm');
     const validationHint = document.getElementById('stressValidation');
-    const submitBtn = document.getElementById('stressSubmitBtn');
     const progressBar = document.getElementById('stressProgressBar');
     const progressFill = document.getElementById('stressProgressFill');
     const progressText = document.getElementById('stressProgressText');
@@ -1179,14 +1200,12 @@ function renderStressChecker(container) {
     const resultLabel = document.getElementById('stressResultLabel');
     const resultWhy = document.getElementById('stressResultWhy');
     const resultTips = document.getElementById('stressResultTips');
-    const retakeBtn = document.getElementById('stressRetakeBtn');
-    const clearBtn = document.getElementById('stressClearBtn');
-    const announcer = document.getElementById('stressAnnouncer');
 
     let responses = new Array(totalQuestions).fill(null);
 
     const announce = (message) => {
-        announcer.textContent = message;
+        const ariaAnnouncer = document.getElementById('ariaAnnouncer');
+        if (ariaAnnouncer) ariaAnnouncer.textContent = message;
     };
 
     const safeGet = (key) => {
@@ -1231,10 +1250,9 @@ function renderStressChecker(container) {
         }
         
         const percent = Math.round((answered / totalQuestions) * 100);
-        progressFill.style.width = `${percent}%`;
-        progressBar.setAttribute('aria-valuenow', String(percent));
-        progressText.textContent = `${percent}% complete`;
-        submitBtn.disabled = answered !== totalQuestions;
+        if (progressFill) progressFill.style.width = `${percent}%`;
+        if (progressBar) progressBar.setAttribute('aria-valuenow', String(percent));
+        if (progressText) progressText.textContent = `${percent}% complete`;
     };
 
     const calculateStressScore = () => {
@@ -1294,17 +1312,17 @@ function renderStressChecker(container) {
         const band = getStressBand(normalizedScore);
         const percent = Math.max(0, Math.min(1, normalizedScore / 40));
 
-        meterFill.style.width = `${percent * 100}%`;
-        meterNeedle.style.left = `${percent * 100}%`;
+        if (meterFill) {
+            meterFill.style.width = `${percent * 100}%`;
+            meterFill.classList.remove('low', 'medium', 'high');
+            meterFill.classList.add(band.severity);
+        }
+        if (meterNeedle) meterNeedle.style.left = `${percent * 100}%`;
+        if (resultLabel) resultLabel.textContent = band.label;
+        if (resultWhy) resultWhy.textContent = `Why you got this: ${band.why}`;
+        if (resultTips) resultTips.innerHTML = band.tips.map((tip) => `<li>${escapeHtml(tip)}</li>`).join('');
 
-        meterFill.classList.remove('low', 'medium', 'high');
-        meterFill.classList.add(band.severity);
-
-        resultLabel.textContent = band.label;
-        resultWhy.textContent = `Why you got this: ${band.why}`;
-        resultTips.innerHTML = band.tips.map((tip) => `<li>${tip}</li>`).join('');
-
-        resultWrapper.classList.remove('hidden');
+        if (resultWrapper) resultWrapper.classList.remove('hidden');
 
         if (!fromLoad) {
             resultWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1364,8 +1382,8 @@ function renderStressChecker(container) {
         responses = new Array(totalQuestions).fill(null);
         safeRemove('sl_stress_responses');
         safeRemove('sl_stress_result');
-        form.reset();
-        resultWrapper.classList.add('hidden');
+        if (form) form.reset();
+        if (resultWrapper) resultWrapper.classList.add('hidden');
         updateProgress();
         announce('Stress check cleared. You can start again.');
     };
@@ -1407,16 +1425,17 @@ function renderStressChecker(container) {
         questionsContainer.appendChild(fieldset);
     });
 
-    if (safeGet('sl_stress_responses')) {
+    const savedResponses = safeGet('sl_stress_responses');
+    if (savedResponses) {
         try {
-            const parsed = JSON.parse(safeGet('sl_stress_responses'));
+            const parsed = JSON.parse(savedResponses);
             if (Array.isArray(parsed) && parsed.length === totalQuestions) {
                 responses = parsed.map((v) => (typeof v === 'number' ? v : null));
                 responses.forEach((value, index) => {
                     if (typeof value === 'number') {
                         const qIndex = index + 1;
                         const selector = `input[name="q${qIndex}"][value="${value}"]`;
-                        const input = form.querySelector(selector);
+                        const input = form ? form.querySelector(selector) : null;
                         if (input) {
                             input.checked = true;
                         }

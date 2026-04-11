@@ -7,7 +7,37 @@ function getAuthHeaders() {
     return headers;
 }
 
-async function apiFetch(endpoint, options = {}, timeoutMs = 10000) {
+// Toast notification for cold start
+function showColdStartToast() {
+    const existing = document.getElementById('cold-start-toast');
+    if (existing) return;
+
+    const toast = document.createElement('div');
+    toast.id = 'cold-start-toast';
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #B8860B;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-size: 14px;
+        z-index: 10000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        animation: slideDown 0.3s ease;
+    `;
+    toast.textContent = 'Server is waking up, please wait a moment and try again.';
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.animation = 'slideUp 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
+}
+
+async function apiFetch(endpoint, options = {}, timeoutMs = 55000) {
     const url = `${API_BASE_URL}${endpoint}`;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -39,10 +69,15 @@ async function apiFetch(endpoint, options = {}, timeoutMs = 10000) {
     } catch (error) {
         clearTimeout(timeoutId);
         if (error.name === 'AbortError') {
+            showColdStartToast();
             const err = new Error(`Timeout: ${endpoint}`);
             err.endpoint = endpoint;
             err.isTimeout = true;
             throw err;
+        }
+        // Network errors (TypeError) also show cold start toast
+        if (error.name === 'TypeError') {
+            showColdStartToast();
         }
         error.endpoint = endpoint;
         console.error(`[API] ${endpoint} - Error:`, error.message);

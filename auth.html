@@ -12,11 +12,13 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#8B6914">
-    <meta name="mobile-web-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="CLUTCH">
     <link rel="apple-touch-icon" href="/Student_Life_Prob_Solver/pwa_logo.jpg">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://student-life-backend-1.onrender.com;">
+    <script src="api.js"></script>
     <style>
         /* Auth Page Specific Styles */
         .auth-page {
@@ -254,6 +256,11 @@
             to { transform: rotate(360deg); }
         }
 
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
         .auth-message {
             padding: 1rem;
             border-radius: 10px;
@@ -402,7 +409,7 @@
     <script>
         // Check if already logged in
         if (localStorage.getItem('token')) {
-            window.location.href = 'index.html';
+            window.location.href = 'app.html';
         }
 
         // Tab Switching
@@ -473,7 +480,7 @@
                     localStorage.setItem('token', data.token);
                     showMessage('Login successful! Redirecting...', 'success');
                     setTimeout(() => {
-                        window.location.href = 'index.html';
+                        window.location.href = 'app.html';
                     }, 800);
                 } else {
                     showMessage(data.message || 'Login failed. Please check your credentials.', 'error');

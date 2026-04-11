@@ -17,6 +17,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="CLUTCH">
     <link rel="apple-touch-icon" href="/Student_Life_Prob_Solver/pwa_logo.jpg">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://student-life-backend-1.onrender.com;">
     <script src="api.js"></script>
     <style>
         /* Auth verification loading state */
@@ -66,6 +67,18 @@
 
             // Background token verification - keep loading overlay until done
             async function verifyToken() {
+                // Fallback: always hide overlay after max 8 seconds (cold start protection)
+                const maxWaitTimeout = setTimeout(() => {
+                    console.log('[Auth] Max wait time reached, hiding overlay');
+                    document.getElementById('auth-checking').classList.add('hidden');
+                    if (!window.AuthState.verified) {
+                        window.AuthState.verified = true;
+                        window.AuthState.onVerified.forEach(callback => {
+                            try { callback(); } catch (e) { console.error(e); }
+                        });
+                    }
+                }, 8000);
+
                 try {
                     console.log('[Auth] Verifying token...');
                     const data = await apiVerifyToken();
@@ -81,6 +94,7 @@
                     }
 
                     // Hide loading overlay now that auth is verified
+                    clearTimeout(maxWaitTimeout);
                     document.getElementById('auth-checking').classList.add('hidden');
 
                     // Trigger callbacks
@@ -89,6 +103,7 @@
                     });
                 } catch (error) {
                     console.error('[Auth] Verification failed:', error.message);
+                    clearTimeout(maxWaitTimeout);
                     if (error.status === 401 || error.status === 403) {
                         clearAllUserState();
                         window.location.replace('index.html');
