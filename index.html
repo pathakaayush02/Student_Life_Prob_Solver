@@ -25,15 +25,17 @@
             const token = localStorage.getItem('token');
             if (token) {
                 window.location.replace('app.html');
-                return;
             }
-            // Pre-warm server while user types credentials
+        })();
+
+        // Warm-up server on page load
+        document.addEventListener('DOMContentLoaded', function() {
             try {
                 fetch('https://student-life-backend-1.onrender.com/health', { method: 'GET' });
             } catch (e) {
                 // Silently ignore errors
             }
-        })();
+        });
     </script>
     <style>
         /* Auth Page Styles - Matching main theme */
@@ -426,15 +428,19 @@
             btn.classList.toggle('loading', loading);
         }
 
-        async function handleLogin(e) {
+        async function handleLogin(e, retryCount = 0) {
             e.preventDefault();
-            hideMessage();
-            setLoading('loginBtn', true);
+            if (retryCount === 0) hideMessage();
 
             const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
+            const btn = document.getElementById('loginBtn');
 
-            console.log('[Auth] Attempting login for:', email);
+            // Set button to loading state
+            btn.disabled = true;
+            btn.classList.add('loading');
+
+            console.log('[Auth] Attempting login for:', email, retryCount > 0 ? `(retry ${retryCount})` : '');
 
             try {
                 const data = await apiLogin(email, password);
@@ -447,12 +453,37 @@
                     window.location.replace('app.html');
                 } else {
                     showMessage(data.message || 'Login failed. Please check your credentials.', 'error');
+                    btn.disabled = false;
+                    btn.classList.remove('loading');
                 }
             } catch (error) {
                 console.error('[Auth] Login error:', error);
-                showMessage(error.message || 'Network error. Please try again.', 'error');
-            } finally {
-                setLoading('loginBtn', false);
+
+                // Check if it's a network/timeout error
+                const isNetworkError = error.name === 'TypeError' ||
+                                       error.message?.includes('Failed to fetch') ||
+                                       error.isTimeout;
+
+                if (isNetworkError && retryCount < 3) {
+                    // Show friendly retry message
+                    showMessage('Connecting to server, retrying in 5 seconds...', 'error');
+
+                    // Wait 5 seconds then retry
+                    setTimeout(() => {
+                        handleLogin(e, retryCount + 1);
+                    }, 5000);
+                    return; // Keep button disabled during retry wait
+                }
+
+                // Max retries reached or other error
+                if (isNetworkError) {
+                    showMessage('Server is taking too long to respond. Please try again in a moment.', 'error');
+                } else {
+                    showMessage(error.message || 'Login failed. Please try again.', 'error');
+                }
+
+                btn.disabled = false;
+                btn.classList.remove('loading');
             }
         }
 
@@ -483,7 +514,17 @@
                 }
             } catch (error) {
                 console.error('[Auth] Signup error:', error);
-                showMessage(error.message || 'Network error. Please try again.', 'error');
+
+                // Check if it's a network/timeout error
+                const isNetworkError = error.name === 'TypeError' ||
+                                       error.message?.includes('Failed to fetch') ||
+                                       error.isTimeout;
+
+                if (isNetworkError) {
+                    showMessage('Server is taking too long to respond. Please try again in a moment.', 'error');
+                } else {
+                    showMessage(error.message || 'Signup failed. Please try again.', 'error');
+                }
             } finally {
                 setLoading('signupBtn', false);
             }
