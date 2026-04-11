@@ -25,6 +25,13 @@
             const token = localStorage.getItem('token');
             if (token) {
                 window.location.replace('app.html');
+                return;
+            }
+            // Pre-warm server while user types credentials
+            try {
+                fetch('https://student-life-backend-1.onrender.com/health', { method: 'GET' });
+            } catch (e) {
+                // Silently ignore errors
             }
         })();
     </script>

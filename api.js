@@ -7,7 +7,40 @@ function getAuthHeaders() {
     return headers;
 }
 
-// Toast notification for cold start
+// Keep server awake - ping every 10 minutes
+function keepServerAwake() {
+    try {
+        fetch(`${API_BASE_URL}/health`, { method: 'GET' });
+    } catch (e) {
+        // Silently ignore errors
+    }
+}
+
+// Start pinging immediately and every 10 minutes (600000ms)
+keepServerAwake();
+setInterval(keepServerAwake, 600000);
+
+// Toast notification for cold start - only shows after 15s delay
+let coldStartToastTimeout = null;
+
+function scheduleColdStartToast() {
+    // Cancel any existing scheduled toast
+    if (coldStartToastTimeout) {
+        clearTimeout(coldStartToastTimeout);
+    }
+    // Schedule toast after 15 seconds
+    coldStartToastTimeout = setTimeout(() => {
+        showColdStartToast();
+    }, 15000);
+}
+
+function cancelColdStartToast() {
+    if (coldStartToastTimeout) {
+        clearTimeout(coldStartToastTimeout);
+        coldStartToastTimeout = null;
+    }
+}
+
 function showColdStartToast() {
     const existing = document.getElementById('cold-start-toast');
     if (existing) return;
@@ -42,6 +75,9 @@ async function apiFetch(endpoint, options = {}, timeoutMs = 55000) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
+    // Schedule cold start toast - will be cancelled if request succeeds quickly
+    scheduleColdStartToast();
+
     const fetchOptions = {
         ...options,
         headers: { ...getAuthHeaders(), ...(options.headers || {}) },
@@ -54,6 +90,8 @@ async function apiFetch(endpoint, options = {}, timeoutMs = 55000) {
     try {
         const response = await fetch(url, fetchOptions);
         clearTimeout(timeoutId);
+        // Request succeeded - cancel the scheduled toast
+        cancelColdStartToast();
         console.log(`[API] ${endpoint} - Status: ${response.status}`);
 
         let data = {};
@@ -68,16 +106,13 @@ async function apiFetch(endpoint, options = {}, timeoutMs = 55000) {
         return data;
     } catch (error) {
         clearTimeout(timeoutId);
+        // Only show toast on actual timeout/abort (after 15s delay already passed)
+        // or on network errors
         if (error.name === 'AbortError') {
-            showColdStartToast();
             const err = new Error(`Timeout: ${endpoint}`);
             err.endpoint = endpoint;
             err.isTimeout = true;
             throw err;
-        }
-        // Network errors (TypeError) also show cold start toast
-        if (error.name === 'TypeError') {
-            showColdStartToast();
         }
         error.endpoint = endpoint;
         console.error(`[API] ${endpoint} - Error:`, error.message);
