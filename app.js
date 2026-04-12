@@ -681,15 +681,19 @@ function renderStudyPlanner(container) {
             const token = localStorage.getItem('token');
             if (token) {
                 try {
-                    await fetch('https://student-life-backend-production.up.railway.app/api/xp', {
+                    const res = await fetch('https://student-life-backend-production.up.railway.app/api/xp/reset', {
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${token}`,
                             'Content-Type': 'application/json'
                         },
-                        cache: 'no-store',
-                        body: JSON.stringify({ xp: 0, reset: true })
+                        cache: 'no-store'
                     });
+                    if (res.ok) {
+                        // Update XP display to show 0
+                        const totalExpDisplay = document.getElementById('totalExpDisplay');
+                        if (totalExpDisplay) totalExpDisplay.textContent = '0 EXP';
+                    }
                 } catch (error) {
                     console.error('[XP] Reset error:', error);
                 }
