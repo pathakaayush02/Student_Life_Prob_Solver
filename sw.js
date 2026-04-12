@@ -1,4 +1,4 @@
-const CACHE_NAME = "clutch-v31";
+const CACHE_NAME = "clutch-v32";
 const ASSETS = [
   "/Student_Life_Prob_Solver/",
   "/Student_Life_Prob_Solver/index.html",
