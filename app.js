@@ -229,14 +229,11 @@ function initFeedbackScroll() {
 /* -------------------------------------------------------------------------- */
 
 const EXP_LEVELS = [
-  { level: 1, title: "Freshman",     min: 0,    max: 99   },
-  { level: 2, title: "Scholar",      min: 100,  max: 249  },
-  { level: 3, title: "Achiever",     min: 250,  max: 499  },
-  { level: 4, title: "Hustler",      min: 500,  max: 899  },
-  { level: 5, title: "Expert",       min: 900,  max: 1399 },
-  { level: 6, title: "Mastermind",   min: 1400, max: 1999 },
-  { level: 7, title: "Legend",       min: 2000, max: 2999 },
-  { level: 8, title: "CLUTCH Master",min: 3000, max: 99999}
+  { level: 1, title: "Freshman",   min: 0,   max: 99   },
+  { level: 2, title: "Sophomore",  min: 100, max: 249  },
+  { level: 3, title: "Junior",     min: 250, max: 499  },
+  { level: 4, title: "Senior",     min: 500, max: 999  },
+  { level: 5, title: "Graduate",   min: 1000, max: 99999}
 ];
 
 function getCurrentLevel(exp) {
@@ -491,7 +488,7 @@ function renderStudyPlanner(container) {
             const studyPlans = Array.isArray(data.data) ? data.data : [];
 
             taskList.innerHTML = '';
-            let totalHours = 0;
+            let totalHours = 0; // Only count hours from completed plans
 
             if (studyPlans.length === 0) {
                 taskList.innerHTML = '<p class="text-muted text-center">No study plans yet. Add your first subject!</p>';
@@ -499,7 +496,10 @@ function renderStudyPlanner(container) {
                 expConversionText.textContent = `Total hours: 0h → 0 EXP possible`;
             } else {
                 studyPlans.forEach((plan) => {
-                    totalHours += parseFloat(plan.targetHours || 0);
+                    // Only count hours from completed plans for EXP calculation
+                    if (plan.status === 'completed') {
+                        totalHours += parseFloat(plan.targetHours || 0);
+                    }
                     const div = document.createElement('div');
                     div.className = 'card';
                     div.style.marginBottom = '1rem';
@@ -639,7 +639,20 @@ function renderStudyPlanner(container) {
         if (!token) return;
 
         try {
-            // Update status
+            // First get the plan details to know the hours
+            const getRes = await fetch(`https://student-life-backend-production.up.railway.app/api/study-plans/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                cache: 'no-store'
+            });
+            if (!getRes.ok) throw new Error('Failed to get plan');
+            const planData = await getRes.json();
+            const plan = planData.data || planData;
+            const hours = parseFloat(plan?.targetHours || 0);
+
+            // Update status to completed
             const res = await fetch(`https://student-life-backend-production.up.railway.app/api/study-plans/${id}`, {
                 method: 'PATCH',
                 headers: {
@@ -652,24 +665,20 @@ function renderStudyPlanner(container) {
 
             if (!res.ok) throw new Error('Failed to update');
 
-            // Add XP
-            try {
-                await fetch('https://student-life-backend-production.up.railway.app/api/xp', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    cache: 'no-store',
-                    body: JSON.stringify({ xp: XP_PER_TASK })
-                });
-            } catch (xpError) {
-                console.error('[XP] Add error:', xpError);
-                const currentXp = parseInt(localStorage.getItem('clutch_exp') || '0');
-                localStorage.setItem('clutch_exp', currentXp + XP_PER_TASK);
+            // Add XP based on hours: 1 hour = 5 EXP
+            const xpToAdd = Math.round(hours * 5);
+            if (xpToAdd > 0) {
+                try {
+                    await apiFetch('/api/xp', { method: 'POST', body: JSON.stringify({ xp: xpToAdd }) });
+                } catch (xpError) {
+                    console.error('[XP] Add error:', xpError);
+                    const currentXp = parseInt(localStorage.getItem('clutch_exp') || '0');
+                    localStorage.setItem('clutch_exp', currentXp + xpToAdd);
+                }
             }
 
             await loadTasks();
+            await loadXpFromBackend(); // Refresh EXP display
         } catch (error) {
             console.error('[Study Plans] Update error:', error);
             alert('Failed to mark study plan as done');
@@ -681,24 +690,30 @@ function renderStudyPlanner(container) {
             const token = localStorage.getItem('token');
             if (token) {
                 try {
-                    const res = await fetch('https://student-life-backend-production.up.railway.app/api/xp/reset', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        cache: 'no-store'
-                    });
-                    if (res.ok) {
-                        // Update XP display to show 0
-                        const totalExpDisplay = document.getElementById('totalExpDisplay');
-                        if (totalExpDisplay) totalExpDisplay.textContent = '0 EXP';
-                    }
+                    await apiFetch('/api/xp/reset', { method: 'POST' });
                 } catch (error) {
                     console.error('[XP] Reset error:', error);
                 }
             }
             localStorage.setItem('clutch_exp', 0);
+
+            // Clear all displays to show 0 / Level 1
+            taskList.innerHTML = '<p class="text-muted text-center">No study plans yet. Add your first subject!</p>';
+            totalHoursBadge.textContent = '0 hours';
+            expConversionText.textContent = `Total hours: 0h → 0 EXP possible`;
+            totalExpDisplay.textContent = '0 EXP';
+
+            // Update level UI to Level 1 - Freshman
+            const levelEl = document.getElementById('exp-level-title');
+            const levelNum = document.getElementById('exp-level-num');
+            const expBar = document.getElementById('exp-progress-bar');
+            const expBarText = document.getElementById('exp-bar-text');
+
+            if (levelEl) levelEl.textContent = 'Freshman';
+            if (levelNum) levelNum.textContent = 'Level 1';
+            if (expBar) expBar.style.width = '0%';
+            if (expBarText) expBarText.textContent = '0 / 100 EXP';
+
             await loadTasks();
             announce('EXP has been reset.');
         }
