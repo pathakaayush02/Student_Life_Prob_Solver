@@ -898,22 +898,30 @@ function renderExpenseTracker(container) {
 
     const updateSavingsUI = (expenses, settings) => {
         const totalExpense = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
-        const savingsAmount = parseFloat(settings?.savingsTarget || 0);
+        const savingsTarget = parseFloat(settings?.savingsTarget || 0);
 
-        savingsInput.value = savingsAmount > 0 ? savingsAmount : '';
+        savingsInput.value = savingsTarget > 0 ? savingsTarget : '';
 
-        if (totalExpense === 0) {
+        if (totalExpense === 0 || savingsTarget === 0) {
             savingsPercentDisplay.textContent = '0%';
             savingsPointsDisplay.textContent = '0';
-            savingsMessage.textContent = 'Add expenses to calculate savings.';
+            if (savingsTarget === 0) {
+                savingsMessage.textContent = 'Set a savings target to start tracking.';
+            } else {
+                savingsMessage.textContent = 'Add expenses to calculate savings.';
+            }
             return;
         }
 
-        let savingsPercent = Math.floor((savingsAmount / totalExpense) * 100);
-        if (savingsPercent > 100) savingsPercent = 100;
+        // Calculate savings ratio: (savingsTarget - totalExpenses) / savingsTarget * 100
+        // If totalExpenses >= savingsTarget, ratio is 0%
+        let savingsPercent = 0;
+        if (totalExpense < savingsTarget) {
+            savingsPercent = Math.floor(((savingsTarget - totalExpense) / savingsTarget) * 100);
+        }
 
-        // Use savings points from API response if available, otherwise calculate locally
-        let newPoints = settings?.savingsPoints ?? (savingsPercent >= 10 ? savingsPercent : 0);
+        // Use savings points from API response
+        let newPoints = settings?.savingsPoints ?? 0;
 
         savingsPercentDisplay.textContent = `${savingsPercent}%`;
         const currentPoints = parseInt(savingsPointsDisplay.textContent || '0');
@@ -943,43 +951,27 @@ function renderExpenseTracker(container) {
 
         if (lastResetMonth !== currentMonthYear) {
             try {
-                const res = await fetch('https://student-life-backend-production.up.railway.app/api/expenses/reset-monthly', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    cache: 'no-store'
-                });
-                if (res.ok) {
-                    localStorage.setItem('expense_last_reset_month', currentMonthYear);
-                    // Refresh to show 0s
-                    await loadExpenses();
-                }
+                await apiFetch('/api/expense-settings/reset', { method: 'POST' });
+                localStorage.setItem('expense_last_reset_month', currentMonthYear);
+                // Clear display and show 0s
+                list.innerHTML = '<p class="text-muted text-center">No expenses recorded yet. Add your first expense above!</p>';
+                totalDisplay.textContent = '₹0.00';
+                savingsPercentDisplay.textContent = '0%';
+                savingsPointsDisplay.textContent = '0';
+                savingsMessage.textContent = 'Add expenses to calculate savings.';
+                savingsInput.value = '';
             } catch (err) {
-                console.error('[Expense Tracker] Monthly reset check failed:', err);
+                console.error('[Expense Tracker] Monthly reset failed:', err);
             }
         }
     };
 
     const loadExpenses = async () => {
         try {
-            const [expRes, settingsRes] = await Promise.all([
-                fetch('https://student-life-backend-production.up.railway.app/api/expenses', {
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    cache: 'no-store'
-                }),
-                fetch('https://student-life-backend-production.up.railway.app/api/expenses/settings', {
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    cache: 'no-store'
-                })
+            const [expResult, settingsResult] = await Promise.all([
+                apiFetch('/api/expenses'),
+                apiFetch('/api/expense-settings')
             ]);
-
-            if (expRes.status === 401 || settingsRes.status === 401) {
-                clearAllUserState();
-                window.location.replace('index.html');
-                return;
-            }
-
-            const expResult = expRes.ok ? await expRes.json() : { data: [] };
-            const settingsResult = settingsRes.ok ? await settingsRes.json() : { data: {} };
 
             const expenses = Array.isArray(expResult) ? expResult : expResult.data || [];
             const settings = settingsResult.data || settingsResult || {};
@@ -1034,21 +1026,10 @@ function renderExpenseTracker(container) {
 
     window.deleteExpense = async (id) => {
         try {
-            const res = await fetch(`https://student-life-backend-production.up.railway.app/api/expenses/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                cache: 'no-store'
-            });
-
-            if (res.status === 401) {
-                clearAllUserState();
-                window.location.replace('index.html');
-                return;
-            }
-
-            if (res.ok) {
-                await loadExpenses();
-            }
+            await apiFetch(`/api/expenses/${id}`, { method: 'DELETE' });
+            // Recalculate savings points after delete
+            await apiFetch('/api/expense-settings/recalculate', { method: 'POST' });
+            await loadExpenses();
         } catch (err) {
             console.error('[Expense Tracker] Failed to delete:', err);
         }
@@ -1060,33 +1041,22 @@ function renderExpenseTracker(container) {
         const newExp = {
             name: document.getElementById('expName').value,
             category: document.getElementById('expCategory').value,
-            amount: parseFloat(document.getElementById('expAmount').value)
+            amount: parseFloat(document.getElementById('expAmount').value),
+            date: new Date().toISOString()
         };
 
         try {
-            const res = await fetch('https://student-life-backend-production.up.railway.app/api/expenses', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                cache: 'no-store',
-                body: JSON.stringify(newExp)
-            });
-
-            if (res.status === 401) {
-                clearAllUserState();
-                window.location.replace('index.html');
-                return;
-            }
-
-            if (res.ok) {
-                form.reset();
-                await loadExpenses();
-            }
+            await apiFetch('/api/expenses', { method: 'POST', body: JSON.stringify(newExp) });
+            // Recalculate savings points after adding expense
+            await apiFetch('/api/expense-settings/recalculate', { method: 'POST' });
+            form.reset();
+            await loadExpenses();
         } catch (err) {
             console.error('[Expense Tracker] Failed to add:', err);
         }
     });
 
-    savingsInput.addEventListener('input', async (e) => {
+    savingsInput.addEventListener('change', async (e) => {
         const val = parseFloat(e.target.value) || 0;
         if (val < 0) {
             e.target.value = 0;
@@ -1095,28 +1065,10 @@ function renderExpenseTracker(container) {
 
         try {
             // First update the savings target
-            const res = await fetch('https://student-life-backend-production.up.railway.app/api/expenses/settings', {
-                method: 'PUT',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                cache: 'no-store',
-                body: JSON.stringify({ savingsTarget: val })
-            });
-
-            if (res.status === 401) {
-                clearAllUserState();
-                window.location.replace('index.html');
-                return;
-            }
-
-            if (res.ok) {
-                // Then recalculate savings points
-                await fetch('https://student-life-backend-production.up.railway.app/api/expenses/settings/recalculate', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                    cache: 'no-store'
-                });
-                await loadExpenses();
-            }
+            await apiFetch('/api/expense-settings', { method: 'PUT', body: JSON.stringify({ savingsTarget: val }) });
+            // Then recalculate savings points
+            await apiFetch('/api/expense-settings/recalculate', { method: 'POST' });
+            await loadExpenses();
         } catch (err) {
             console.error('[Expense Tracker] Failed to update settings:', err);
         }
