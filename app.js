@@ -639,19 +639,6 @@ function renderStudyPlanner(container) {
         if (!token) return;
 
         try {
-            // First get the plan details to know the hours
-            const getRes = await fetch(`https://student-life-backend-production.up.railway.app/api/study-plans/${id}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                cache: 'no-store'
-            });
-            if (!getRes.ok) throw new Error('Failed to get plan');
-            const planData = await getRes.json();
-            const plan = planData.data || planData;
-            const hours = parseFloat(plan?.targetHours || 0);
-
             // Update status to completed
             const res = await fetch(`https://student-life-backend-production.up.railway.app/api/study-plans/${id}`, {
                 method: 'PATCH',
@@ -665,20 +652,9 @@ function renderStudyPlanner(container) {
 
             if (!res.ok) throw new Error('Failed to update');
 
-            // Add XP based on hours: 1 hour = 5 EXP
-            const xpToAdd = Math.round(hours * 5);
-            if (xpToAdd > 0) {
-                try {
-                    await apiFetch('/api/xp', { method: 'POST', body: JSON.stringify({ xp: xpToAdd }) });
-                } catch (xpError) {
-                    console.error('[XP] Add error:', xpError);
-                    const currentXp = parseInt(localStorage.getItem('clutch_exp') || '0');
-                    localStorage.setItem('clutch_exp', currentXp + xpToAdd);
-                }
-            }
-
+            // Refresh display and XP (backend calculates XP automatically)
             await loadTasks();
-            await loadXpFromBackend(); // Refresh EXP display
+            await loadXpFromBackend();
         } catch (error) {
             console.error('[Study Plans] Update error:', error);
             alert('Failed to mark study plan as done');
