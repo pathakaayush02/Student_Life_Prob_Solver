@@ -17,7 +17,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="CLUTCH">
     <link rel="apple-touch-icon" href="/Student_Life_Prob_Solver/pwa_logo.jpg">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://student-life-backend.up.railway.app;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://student-life-backend-production.up.railway.app;">
     <script src="api.js"></script>
     <script>
         // Immediate auth check - if logged in, go to app
@@ -31,7 +31,7 @@
         // Warm-up server on page load
         document.addEventListener('DOMContentLoaded', function() {
             try {
-                fetch('https://student-life-backend.up.railway.app/health', { method: 'GET' });
+                fetch('https://student-life-backend-production.up.railway.app/health', { method: 'GET' });
             } catch (e) {
                 // Silently ignore errors
             }

@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://student-life-backend.up.railway.app';
+const API_BASE_URL = 'https://student-life-backend-production.up.railway.app';
 
 function getAuthHeaders() {
     const token = localStorage.getItem('token');
