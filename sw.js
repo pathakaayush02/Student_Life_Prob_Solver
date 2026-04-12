@@ -1,4 +1,4 @@
-const CACHE_NAME = "clutch-v24";
+const CACHE_NAME = "clutch-v25";
 const ASSETS = [
   "/Student_Life_Prob_Solver/",
   "/Student_Life_Prob_Solver/index.html",
@@ -31,13 +31,13 @@ self.addEventListener("install", function(event) {
 self.addEventListener("activate", function(event) {
   event.waitUntil(
     caches.keys().then(function(keys) {
-      return Promise.all(
-        keys.filter(function(key) {
-          return key !== CACHE_NAME;
-        }).map(function(key) {
-          return caches.delete(key);
-        })
-      );
+      // Force clear ALL old caches first
+      return Promise.all(keys.map(function(key) {
+        return caches.delete(key);
+      }));
+    }).then(function() {
+      // Then open new cache
+      return caches.open(CACHE_NAME);
     })
   );
   self.clients.claim();
