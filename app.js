@@ -456,7 +456,7 @@ function renderStudyPlanner(container) {
 
         const fetchWithRetry = async (retryCount = 0) => {
             try {
-                const res = await fetch('https://student-life-backend-1.onrender.com/api/study-plans', {
+                const res = await fetch('https://student-life-backend.up.railway.app/api/study-plans', {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
@@ -570,7 +570,7 @@ function renderStudyPlanner(container) {
 
         const fetchXpWithRetry = async (retryCount = 0) => {
             try {
-                const res = await fetch('https://student-life-backend-1.onrender.com/api/xp', {
+                const res = await fetch('https://student-life-backend.up.railway.app/api/xp', {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
@@ -615,7 +615,7 @@ function renderStudyPlanner(container) {
         if (!token) return;
 
         try {
-            const res = await fetch(`https://student-life-backend-1.onrender.com/api/study-plans/${id}`, {
+            const res = await fetch(`https://student-life-backend.up.railway.app/api/study-plans/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -640,7 +640,7 @@ function renderStudyPlanner(container) {
 
         try {
             // Update status
-            const res = await fetch(`https://student-life-backend-1.onrender.com/api/study-plans/${id}`, {
+            const res = await fetch(`https://student-life-backend.up.railway.app/api/study-plans/${id}`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -654,7 +654,7 @@ function renderStudyPlanner(container) {
 
             // Add XP
             try {
-                await fetch('https://student-life-backend-1.onrender.com/api/xp', {
+                await fetch('https://student-life-backend.up.railway.app/api/xp', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -681,7 +681,7 @@ function renderStudyPlanner(container) {
             const token = localStorage.getItem('token');
             if (token) {
                 try {
-                    await fetch('https://student-life-backend-1.onrender.com/api/xp', {
+                    await fetch('https://student-life-backend.up.railway.app/api/xp', {
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -730,7 +730,7 @@ function renderStudyPlanner(container) {
         }
 
         try {
-            const res = await fetch('https://student-life-backend-1.onrender.com/api/study-plans', {
+            const res = await fetch('https://student-life-backend.up.railway.app/api/study-plans', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -934,11 +934,11 @@ function renderExpenseTracker(container) {
     const loadExpenses = async () => {
         try {
             const [expRes, settingsRes] = await Promise.all([
-                fetch('https://student-life-backend-1.onrender.com/api/expenses', {
+                fetch('https://student-life-backend.up.railway.app/api/expenses', {
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     cache: 'no-store'
                 }),
-                fetch('https://student-life-backend-1.onrender.com/api/expense-settings', {
+                fetch('https://student-life-backend.up.railway.app/api/expense-settings', {
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     cache: 'no-store'
                 })
@@ -1006,7 +1006,7 @@ function renderExpenseTracker(container) {
 
     window.deleteExpense = async (id) => {
         try {
-            const res = await fetch(`https://student-life-backend-1.onrender.com/api/expenses/${id}`, {
+            const res = await fetch(`https://student-life-backend.up.railway.app/api/expenses/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 cache: 'no-store'
@@ -1036,7 +1036,7 @@ function renderExpenseTracker(container) {
         };
 
         try {
-            const res = await fetch('https://student-life-backend-1.onrender.com/api/expenses', {
+            const res = await fetch('https://student-life-backend.up.railway.app/api/expenses', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 cache: 'no-store',
@@ -1066,7 +1066,7 @@ function renderExpenseTracker(container) {
         }
 
         try {
-            const res = await fetch('https://student-life-backend-1.onrender.com/api/expense-settings', {
+            const res = await fetch('https://student-life-backend.up.railway.app/api/expense-settings', {
                 method: 'PATCH',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 cache: 'no-store',
@@ -2182,7 +2182,7 @@ async function renderPomodoroTimer(container) {
 
     if ("Notification" in window) Notification.requestPermission();
 
-    const BASE_URL = 'https://student-life-backend-1.onrender.com';
+    const BASE_URL = 'https://student-life-backend.up.railway.app';
 
     // ==========================================
     // CLEAN STATE - NO localStorage FOR STATS
