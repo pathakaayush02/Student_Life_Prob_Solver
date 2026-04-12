@@ -2191,16 +2191,20 @@ async function renderPomodoroTimer(container) {
     function playBeep() {
         try {
             const now = audioContext.currentTime;
-            const osc = audioContext.createOscillator();
-            const gain = audioContext.createGain();
-            osc.connect(gain);
-            gain.connect(audioContext.destination);
-            osc.frequency.value = 880; // A5 note
-            osc.type = 'sine';
-            gain.gain.setValueAtTime(0.5, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-            osc.start(now);
-            osc.stop(now + 0.2);
+            // Triple beep: 880Hz, gain 0.8, 3 beeps with 0.3s gaps, each 0.3s
+            for (let i = 0; i < 3; i++) {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.frequency.value = 880;
+                osc.type = 'sine';
+                const startTime = now + (i * 0.6); // 0.3s beep + 0.3s gap
+                gain.gain.setValueAtTime(0.8, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.3);
+                osc.start(startTime);
+                osc.stop(startTime + 0.3);
+            }
         } catch (e) {
             console.error('[Focus Timer] Audio failed:', e);
         }
@@ -2368,10 +2372,10 @@ async function renderPomodoroTimer(container) {
         try {
             const data = await apiCall('/api/focus-stats');
             const stats = data.data || data || {};
-            state.completedSessions = stats.totalSessions || 0;
-            state.totalFocusMinutes = stats.totalMinutes || 0;
-            // Backend may return XP, otherwise calculate locally
-            state.totalEXP = stats.xp || calculateEXP(state.completedSessions);
+            // Use exact field names from backend response
+            state.completedSessions = stats.sessionsCompleted || stats.totalSessions || 0;
+            state.totalFocusMinutes = stats.totalFocusTime || stats.totalMinutes || 0;
+            state.totalEXP = stats.xp || 0;
             // Calculate which session in cycle (1-4)
             state.sessionInCycle = (state.completedSessions % 4) + 1;
             updateStatsUI();
@@ -2432,8 +2436,8 @@ async function renderPomodoroTimer(container) {
             // Save to backend
             await saveSessionToBackend(state.focusDuration);
 
-            // Update UI
-            updateStatsUI();
+            // Reload ALL stats from backend (includes XP, sessions, time)
+            await loadStatsFromBackend();
 
             showNotification('Focus Complete!', `Session ${state.completedSessions} done. ${state.totalEXP} EXP earned!`);
 
