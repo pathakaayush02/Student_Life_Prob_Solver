@@ -2024,7 +2024,12 @@ function renderCareerHelper(container) {
  * @param {HTMLElement} container - The workspace container to render into.
  */
 async function renderPomodoroTimer(container) {
-    // HTML template (unchanged)
+    // Load settings from localStorage or use defaults
+    const savedSettings = JSON.parse(localStorage.getItem('focusTimerSettings') || '{}');
+    const defaultFocus = savedSettings.focusMinutes || 25;
+    const defaultShortBreak = savedSettings.shortBreakMinutes || 5;
+    const defaultLongBreak = savedSettings.longBreakMinutes || 15;
+
     container.innerHTML = `
         <div class="tool-header">
             <div class="tool-icon-large">
@@ -2041,35 +2046,28 @@ async function renderPomodoroTimer(container) {
                 <div class="card">
                     <div style="text-align: center; padding: 3rem 0;">
                         <div style="width: 250px; height: 250px; background: var(--bg-soft-highlight); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; position: relative;">
-                            <div id="timerProgress" style="position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px; border-radius: 50%; border: 8px solid var(--color-border); border-top: 8px solid var(--color-primary);"></div>
+                            <div id="timerProgress" style="position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px; border-radius: 50%; border: 8px solid var(--color-border); border-top: 8px solid var(--color-primary); transition: transform 0.3s;"></div>
                             <div style="text-align: center;">
                                 <div id="sessionLabel" style="font-size: 1.2rem; font-weight: 600; color: var(--color-muted); margin-bottom: 0.5rem;">Focus</div>
-                                <div id="timeLeft" style="font-size: 3rem; font-weight: 800; color: var(--color-heading); line-height: 1;">25:00</div>
+                                <div id="timeLeft" style="font-size: 3rem; font-weight: 800; color: var(--color-heading); line-height: 1;">${defaultFocus}:00</div>
                             </div>
                         </div>
                         
-                        <div style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem;">
-                            <button id="startPauseBtn" class="btn btn-primary btn-large">
+                        <div style="display: flex; justify-content: center; margin-bottom: 1.5rem;">
+                            <button id="startPauseBtn" class="btn btn-primary btn-large" style="min-width: 140px;">
                                 <i data-lucide="play" width="20" height="20" style="margin-right: 0.5rem;"></i>
                                 Start
                             </button>
-                            <button id="resetBtn" class="btn btn-ghost">
-                                <i data-lucide="rotate-ccw" width="16" height="16" style="margin-right: 0.5rem;"></i>
-                                Reset
-                            </button>
-                            <button id="skipBtn" class="btn btn-ghost" title="Skip Session">
-                                <i data-lucide="skip-forward" width="16" height="16"></i>
-                            </button>
                         </div>
 
-                        <div style="margin-bottom: 2rem;">
-                            <div id="cycleDots" style="display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--color-primary);"></div>
-                                <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--color-border);"></div>
-                                <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--color-border);"></div>
-                                <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--color-border);"></div>
+                        <div style="margin-bottom: 1rem;">
+                            <div id="cycleDots" style="display: flex; justify-content: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                                <div class="session-dot" style="width: 12px; height: 12px; border-radius: 50%; background: var(--color-border); border: 2px solid var(--color-primary); transition: all 0.3s;"></div>
+                                <div class="session-dot" style="width: 12px; height: 12px; border-radius: 50%; background: var(--color-border); border: 2px solid var(--color-primary); transition: all 0.3s;"></div>
+                                <div class="session-dot" style="width: 12px; height: 12px; border-radius: 50%; background: var(--color-border); border: 2px solid var(--color-primary); transition: all 0.3s;"></div>
+                                <div class="session-dot" style="width: 12px; height: 12px; border-radius: 50%; background: var(--color-border); border: 2px solid var(--color-primary); transition: all 0.3s;"></div>
                             </div>
-                            <p id="cycleText" style="color: var(--color-muted); font-size: 0.9rem;">1 / 4 sessions until long break</p>
+                            <p id="cycleText" style="color: var(--color-muted); font-size: 0.9rem; font-weight: 500;">1 / 4 sessions until long break</p>
                         </div>
                     </div>
                 </div>
@@ -2079,15 +2077,15 @@ async function renderPomodoroTimer(container) {
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                         <div class="form-group">
                             <label for="focusDuration" class="form-label">Focus (minutes)</label>
-                            <input type="number" id="focusDuration" class="form-input" min="1" max="60" value="25">
+                            <input type="number" id="focusDuration" class="form-input" min="1" max="60" value="${defaultFocus}">
                         </div>
                         <div class="form-group">
                             <label for="shortBreakDuration" class="form-label">Short Break (minutes)</label>
-                            <input type="number" id="shortBreakDuration" class="form-input" min="1" max="30" value="5">
+                            <input type="number" id="shortBreakDuration" class="form-input" min="1" max="30" value="${defaultShortBreak}">
                         </div>
                         <div class="form-group">
                             <label for="longBreakDuration" class="form-label">Long Break (minutes)</label>
-                            <input type="number" id="longBreakDuration" class="form-input" min="1" max="60" value="15">
+                            <input type="number" id="longBreakDuration" class="form-input" min="1" max="60" value="${defaultLongBreak}">
                         </div>
                     </div>
                 </div>
@@ -2097,18 +2095,18 @@ async function renderPomodoroTimer(container) {
                 <div class="card">
                     <h3>Session Stats</h3>
                     <div style="text-align:center; padding:16px 0;">
-  <div style="font-size:13px; font-weight:600; color:#b8960c; letter-spacing:1px; margin-bottom:4px;" id="exp-level-num">Level 1</div>
-  <div style="font-size:22px; font-weight:700; color:var(--text-primary); margin-bottom:2px;" id="exp-level-title">Freshman</div>
-  <div style="width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,#b8960c,#7a6200); display:flex; align-items:center; justify-content:center; margin:12px auto; flex-direction:column;">
-    <span style="font-size:24px; font-weight:700; color:white;" id="totalExpDisplay">0</span>
-    <span style="font-size:10px; color:rgba(255,255,255,0.8);">EXP</span>
-  </div>
-  <div style="margin:12px 0 4px; font-size:12px; color:var(--text-muted);" id="exp-bar-text">0 / 100 EXP</div>
-  <div style="background:var(--border-color); border-radius:10px; height:8px; overflow:hidden; margin:0 8px;">
-    <div id="exp-progress-bar" style="height:100%; width:0%; background:linear-gradient(90deg,#b8960c,#f0c040); border-radius:10px; transition:width 0.5s ease;"></div>
-  </div>
-  <div style="font-size:12px; color:var(--text-muted); margin-top:8px;">Next level progress</div>
-</div>
+                        <div style="font-size:13px; font-weight:600; color:#b8960c; letter-spacing:1px; margin-bottom:4px;" id="exp-level-num">Level 1</div>
+                        <div style="font-size:22px; font-weight:700; color:var(--text-primary); margin-bottom:2px;" id="exp-level-title">Freshman</div>
+                        <div style="width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,#b8960c,#7a6200); display:flex; align-items:center; justify-content:center; margin:12px auto; flex-direction:column;">
+                            <span style="font-size:24px; font-weight:700; color:white;" id="totalExpDisplay">0</span>
+                            <span style="font-size:10px; color:rgba(255,255,255,0.8);">EXP</span>
+                        </div>
+                        <div style="margin:12px 0 4px; font-size:12px; color:var(--text-muted);" id="exp-bar-text">0 / 100 EXP</div>
+                        <div style="background:var(--border-color); border-radius:10px; height:8px; overflow:hidden; margin:0 8px;">
+                            <div id="exp-progress-bar" style="height:100%; width:0%; background:linear-gradient(90deg,#b8960c,#f0c040); border-radius:10px; transition:width 0.5s ease;"></div>
+                        </div>
+                        <div style="font-size:12px; color:var(--text-muted); margin-top:8px;">Next level progress</div>
+                    </div>
                     
                     <div style="background: var(--bg-soft-highlight); padding: 1rem; border-radius: var(--radius-button); margin-bottom: 1rem;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
@@ -2121,28 +2119,24 @@ async function renderPomodoroTimer(container) {
                         </div>
                     </div>
                     
-                    <div style="background: var(--bg-soft-highlight); padding: 1rem; border-radius: var(--radius-button);">
+                    <div style="background: var(--bg-soft-highlight); padding: 1rem; border-radius: var(--radius-button); margin-bottom: 1rem;">
                         <div style="font-weight: 600; margin-bottom: 0.5rem;">EXP Rewards</div>
-                        <div style="color: var(--color-muted); font-size: 0.9rem; margin-bottom: 0.25rem;">&#8226; Focus Session: +10 EXP</div>
-                        <div style="color: var(--color-muted); font-size: 0.9rem;">&#8226; Full Set (4 sessions): +20 Bonus EXP</div>
+                        <div style="color: var(--color-muted); font-size: 0.9rem; margin-bottom: 0.25rem;">+10 EXP per focus session</div>
+                        <div style="color: var(--color-muted); font-size: 0.9rem;">+20 bonus EXP per full set (4)</div>
                     </div>
                     
-                    <button id="resetStatsBtn" class="btn btn-ghost" style="width: 100%; margin-top: 1rem;">Reset Stats</button>
+                    <button id="resetStatsBtn" class="btn btn-ghost" style="width: 100%;">Reset Stats</button>
                 </div>
             </aside>
         </div>
         <div style="display:flex; justify-content:flex-end; margin-top:32px; padding-top:16px; border-top:1px solid #e8d88a;">
-          <a href="app.html" class="close-tool-btn">
-            Close Tool
-          </a>
+            <a href="app.html" class="close-tool-btn">Close Tool</a>
         </div>
         <div id="ariaAnnouncer" class="sr-only" aria-live="polite"></div>
     `;
 
     // DOM elements
     const startPauseBtn = document.getElementById('startPauseBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const skipBtn = document.getElementById('skipBtn');
     const timeLeftDisplay = document.getElementById('timeLeft');
     const sessionLabelDisplay = document.getElementById('sessionLabel');
     const cycleTextDisplay = document.getElementById('cycleText');
@@ -2153,38 +2147,39 @@ async function renderPomodoroTimer(container) {
     const focusInput = document.getElementById('focusDuration');
     const shortBreakInput = document.getElementById('shortBreakDuration');
     const longBreakInput = document.getElementById('longBreakDuration');
+    const timerProgress = document.getElementById('timerProgress');
+    const dots = document.querySelectorAll('.session-dot');
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
     const token = localStorage.getItem('token');
     if (!token) { window.location.replace('index.html'); return; }
 
-    if ("Notification" in window) Notification.requestPermission();
-
     const BASE_URL = 'https://student-life-backend-production.up.railway.app';
 
-    // ==========================================
-    // CLEAN STATE - NO localStorage FOR STATS
-    // ==========================================
+    // EXP Level thresholds (5 levels)
+    const EXP_LEVELS = [
+        { level: 1, title: 'Freshman', min: 0, max: 99 },
+        { level: 2, title: 'Sophomore', min: 100, max: 249 },
+        { level: 3, title: 'Junior', min: 250, max: 499 },
+        { level: 4, title: 'Senior', min: 500, max: 999 },
+        { level: 5, title: 'Graduate', min: 1000, max: Infinity }
+    ];
 
+    // State
     const state = {
         timerInterval: null,
         isRunning: false,
-        currentMode: "focus",
-        sessionSaved: false,
-        savingInProgress: false,
-        currentSessionId: null,
-        focusDuration: parseInt(focusInput?.value) || 25,
-        shortBreakDuration: parseInt(shortBreakInput?.value) || 5,
-        longBreakDuration: parseInt(longBreakInput?.value) || 15,
-        timeLeft: (parseInt(focusInput?.value) || 25) * 60
-    };
-
-    // Backend data - ONLY source of truth for stats
-    const backendData = {
-        totalSessions: 0,
-        totalMinutes: 0,
-        xp: 0
+        currentMode: 'focus', // 'focus', 'shortBreak', 'longBreak'
+        sessionInCycle: 1, // 1-4 within current set
+        completedSessions: 0, // Total completed focus sessions
+        focusDuration: defaultFocus,
+        shortBreakDuration: defaultShortBreak,
+        longBreakDuration: defaultLongBreak,
+        timeLeft: defaultFocus * 60,
+        totalFocusMinutes: 0,
+        totalEXP: 0,
+        notificationRequested: false
     };
 
     // ==========================================
@@ -2193,57 +2188,37 @@ async function renderPomodoroTimer(container) {
 
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-    function playAlarmSound() {
+    function playBeep() {
         try {
             const now = audioContext.currentTime;
-
-            const osc1 = audioContext.createOscillator();
-            const gain1 = audioContext.createGain();
-            osc1.connect(gain1);
-            gain1.connect(audioContext.destination);
-            osc1.frequency.value = 880;
-            osc1.type = 'sine';
-            gain1.gain.setValueAtTime(0.4, now);
-            gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-            osc1.start(now);
-            osc1.stop(now + 0.3);
-
-            const osc2 = audioContext.createOscillator();
-            const gain2 = audioContext.createGain();
-            osc2.connect(gain2);
-            gain2.connect(audioContext.destination);
-            osc2.frequency.value = 880;
-            osc2.type = 'sine';
-            gain2.gain.setValueAtTime(0.4, now + 0.35);
-            gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.65);
-            osc2.start(now + 0.35);
-            osc2.stop(now + 0.65);
-
-            const osc3 = audioContext.createOscillator();
-            const gain3 = audioContext.createGain();
-            osc3.connect(gain3);
-            gain3.connect(audioContext.destination);
-            osc3.frequency.value = 1100;
-            osc3.type = 'sine';
-            gain3.gain.setValueAtTime(0.5, now + 0.7);
-            gain3.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
-            osc3.start(now + 0.7);
-            osc3.stop(now + 1.0);
-
-        } catch (e) { 
-            console.error('[Focus Timer] Audio play failed:', e); 
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+            osc.frequency.value = 880; // A5 note
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.5, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            osc.start(now);
+            osc.stop(now + 0.2);
+        } catch (e) {
+            console.error('[Focus Timer] Audio failed:', e);
         }
     }
 
+    async function requestNotificationPermission() {
+        if (!state.notificationRequested && 'Notification' in window) {
+            const permission = await Notification.requestPermission();
+            state.notificationRequested = true;
+            return permission === 'granted';
+        }
+        return Notification.permission === 'granted';
+    }
+
     function showNotification(title, body) {
-        if (Notification.permission === "granted") {
+        if (Notification.permission === 'granted') {
             try {
-                new Notification(title, {
-                    body: body,
-                    icon: "logo.png",
-                    badge: "logo.png",
-                    tag: 'focus-timer-' + Date.now()
-                });
+                new Notification(title, { body, icon: 'logo.png', tag: 'focus-timer-' + Date.now() });
             } catch (e) {
                 console.error('[Focus Timer] Notification failed:', e);
             }
@@ -2251,13 +2226,61 @@ async function renderPomodoroTimer(container) {
     }
 
     // ==========================================
+    // EXP & LEVEL SYSTEM (5 levels)
+    // ==========================================
+
+    function getCurrentLevel(exp) {
+        return EXP_LEVELS.find(l => exp >= l.min && exp <= l.max) || EXP_LEVELS[0];
+    }
+
+    function getNextLevel(exp) {
+        return EXP_LEVELS.find(l => l.min > exp);
+    }
+
+    function updateLevelUI(exp) {
+        const current = getCurrentLevel(exp);
+        const next = getNextLevel(exp);
+
+        document.getElementById('exp-level-title').textContent = current.title;
+        document.getElementById('exp-level-num').textContent = `Level ${current.level}`;
+        document.getElementById('totalExpDisplay').textContent = exp;
+
+        const progressBar = document.getElementById('exp-progress-bar');
+        const expBarText = document.getElementById('exp-bar-text');
+
+        if (next) {
+            const progress = ((exp - current.min) / (next.min - current.min)) * 100;
+            progressBar.style.width = `${Math.min(progress, 100)}%`;
+            expBarText.textContent = `${exp} / ${next.min} EXP`;
+        } else {
+            progressBar.style.width = '100%';
+            expBarText.textContent = `${exp} / ${current.min}+ EXP`;
+        }
+    }
+
+    function calculateEXP(sessions) {
+        // +10 per session, +20 bonus per full set (4 sessions)
+        const baseExp = sessions * 10;
+        const bonusExp = Math.floor(sessions / 4) * 20;
+        return baseExp + bonusExp;
+    }
+
+    // ==========================================
     // UI UPDATES
     // ==========================================
 
     function updateDisplay() {
-        const mins = Math.floor(state.timeLeft / 60).toString().padStart(2, "0");
-        const secs = (state.timeLeft % 60).toString().padStart(2, "0");
+        const mins = Math.floor(state.timeLeft / 60).toString().padStart(2, '0');
+        const secs = (state.timeLeft % 60).toString().padStart(2, '0');
         timeLeftDisplay.textContent = `${mins}:${secs}`;
+
+        // Update progress ring rotation
+        const totalSeconds = state.currentMode === 'focus' ? state.focusDuration * 60 :
+                             state.currentMode === 'shortBreak' ? state.shortBreakDuration * 60 :
+                             state.longBreakDuration * 60;
+        const progress = 1 - (state.timeLeft / totalSeconds);
+        const rotation = progress * 360;
+        timerProgress.style.transform = `rotate(${rotation}deg)`;
     }
 
     function updateButton() {
@@ -2265,51 +2288,49 @@ async function renderPomodoroTimer(container) {
         const text = state.isRunning ? 'Pause' : 'Start';
         startPauseBtn.innerHTML = `<i data-lucide="${icon}" width="20" height="20" style="margin-right: 0.5rem;"></i>${text}`;
         if (typeof lucide !== 'undefined') lucide.createIcons();
-
-        startPauseBtn.style.opacity = state.savingInProgress ? '0.6' : '1';
-        startPauseBtn.style.pointerEvents = state.savingInProgress ? 'none' : 'auto';
     }
 
     function updatePhaseLabel() {
         const labels = {
-            focus: "Focus Session",
-            break: "Break"
+            focus: 'Focus Session',
+            shortBreak: 'Short Break',
+            longBreak: 'Long Break'
         };
-        sessionLabelDisplay.textContent = labels[state.currentMode] || "Break";
+        sessionLabelDisplay.textContent = labels[state.currentMode] || 'Break';
+        cycleTextDisplay.textContent = `${state.sessionInCycle} / 4 sessions until long break`;
+    }
 
-        // Cycle calculation from backend ONLY
-        const sessions = backendData.totalSessions;
-        let cyclePosition = sessions % 4;
-        if (cyclePosition === 0 && sessions > 0) cyclePosition = 4;
-        if (cyclePosition === 0 && sessions === 0) cyclePosition = 1;
-
-        cycleTextDisplay.textContent = `${cyclePosition} / 4 sessions until long break`;
-
-        // Update dots
-        const dots = document.querySelectorAll('#cycleDots > div');
+    function updateDots() {
         dots.forEach((dot, index) => {
-            dot.style.background = index < cyclePosition ? 'var(--color-primary)' : 'var(--color-border)';
+            if (index < state.sessionInCycle - 1) {
+                // Completed sessions in this cycle
+                dot.style.background = 'var(--color-primary)';
+            } else {
+                // Not yet completed
+                dot.style.background = 'var(--color-border)';
+            }
         });
     }
 
     function updateStatsUI() {
-        // ONLY backend data - no local calculations
-        totalSetsDisplay.textContent = backendData.totalSessions;
-        totalFocusTimeDisplay.textContent = backendData.totalMinutes + " min";
-        totalExpDisplay.textContent = backendData.xp;
-        updateLevelUI(backendData.xp);
+        totalSetsDisplay.textContent = state.completedSessions;
+        totalFocusTimeDisplay.textContent = `${state.totalFocusMinutes} min`;
+        totalExpDisplay.textContent = state.totalEXP;
+        updateLevelUI(state.totalEXP);
+        updateDots();
     }
 
     function flashScreen() {
-        document.body.style.transition = "background 0.4s ease";
-        document.body.style.background = "linear-gradient(135deg, #fffbe6, #fff5d6)";
+        const originalBg = document.body.style.background;
+        document.body.style.transition = 'background 0.4s ease';
+        document.body.style.background = 'linear-gradient(135deg, #fffbe6, #fff5d6)';
         setTimeout(() => {
-            document.body.style.background = "";
+            document.body.style.background = originalBg;
         }, 800);
     }
 
     // ==========================================
-    // BACKEND API - ONLY /api/focus-stats FOR STATS
+    // BACKEND API
     // ==========================================
 
     async function apiCall(endpoint, options = {}) {
@@ -2328,7 +2349,6 @@ async function renderPomodoroTimer(container) {
                 cache: 'no-store',
                 signal: controller.signal
             });
-
             clearTimeout(timeoutId);
 
             if (res.status === 401) {
@@ -2336,137 +2356,111 @@ async function renderPomodoroTimer(container) {
                 window.location.replace('index.html');
                 throw new Error('Unauthorized');
             }
-
-            if (!res.ok) {
-                const errorText = await res.text();
-                throw new Error(`HTTP ${res.status}: ${errorText}`);
-            }
-
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             return await res.json();
         } catch (err) {
             clearTimeout(timeoutId);
-            if (err.name === 'AbortError') {
-                throw new Error('Request timeout');
-            }
             throw err;
         }
     }
 
-    // Load ALL stats from /api/focus-stats ONLY - NO /api/xp
-    async function loadStats() {
+    async function loadStatsFromBackend() {
         try {
             const data = await apiCall('/api/focus-stats');
             const stats = data.data || data || {};
-
-            // ONLY backend values - never local calculations
-            backendData.totalSessions = stats.totalSessions || 0;
-            backendData.totalMinutes = stats.totalMinutes || 0;
-            backendData.xp = stats.xp || 0;
-
+            state.completedSessions = stats.totalSessions || 0;
+            state.totalFocusMinutes = stats.totalMinutes || 0;
+            // Backend may return XP, otherwise calculate locally
+            state.totalEXP = stats.xp || calculateEXP(state.completedSessions);
+            // Calculate which session in cycle (1-4)
+            state.sessionInCycle = (state.completedSessions % 4) + 1;
             updateStatsUI();
             updatePhaseLabel();
-
-            return backendData;
         } catch (err) {
             console.error('[Focus Timer] Failed to load stats:', err);
-            return backendData;
         }
     }
 
-    // Save focus session - ONLY for focus mode, NOT break
-    async function saveFocusSession(duration, sessionId) {
+    async function saveSessionToBackend(duration) {
+        const clientSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         try {
-            const data = await apiCall('/api/focus-sessions', {
+            await apiCall('/api/focus-sessions', {
                 method: 'POST',
                 body: JSON.stringify({
-                    duration: duration,
-                    clientSessionId: sessionId,
+                    clientSessionId,
+                    duration,
                     completed: true
                 })
             });
-
-            console.log('[Focus Timer] Session saved:', data);
-            return { success: true, data };
+            console.log('[Focus Timer] Session saved to backend');
         } catch (err) {
             console.error('[Focus Timer] Failed to save session:', err);
-            return { success: false, error: err.message };
         }
     }
 
-    // Reset stats - POST /api/focus-sessions/reset
     async function resetBackendStats() {
         try {
             await apiCall('/api/focus-sessions/reset', { method: 'POST' });
-            console.log('[Focus Timer] Stats reset successfully');
+            console.log('[Focus Timer] Backend stats reset');
             return { success: true };
         } catch (err) {
-            console.error('[Focus Timer] Failed to reset stats:', err);
-            return { success: false, error: err.message };
+            console.error('[Focus Timer] Failed to reset backend:', err);
+            return { success: false };
         }
     }
 
     // ==========================================
-    // SESSION COMPLETION - ATOMIC, SINGLE PATH
+    // SESSION COMPLETION
     // ==========================================
 
     async function handleSessionComplete() {
-        // GUARD: Prevent any duplicate processing
-        if (state.sessionSaved || state.savingInProgress) {
-            console.log('[Focus Timer] Session already processed, skipping');
-            return;
-        }
-
-        // Lock immediately
-        state.savingInProgress = true;
-        state.sessionSaved = true;
         state.isRunning = false;
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
 
+        playBeep();
         updateButton();
-        playAlarmSound();
 
-        if (state.currentMode === "focus") {
-            // FOCUS COMPLETION - Save to backend
-            showNotification(
-                "Focus Session Complete! ",
-                `Great job! You completed ${state.focusDuration} minutes of focused work. Time for a break!`
-            );
+        if (state.currentMode === 'focus') {
+            // FOCUS SESSION COMPLETE
+            state.completedSessions++;
+            state.totalFocusMinutes += state.focusDuration;
 
-            // ONE save to backend
-            await saveFocusSession(state.focusDuration, state.currentSessionId);
+            // Calculate EXP (+10 base, +20 per full set)
+            state.totalEXP = calculateEXP(state.completedSessions);
 
-            // Reload ALL stats from backend (includes XP, sessions, time)
-            await loadStats();
+            // Save to backend
+            await saveSessionToBackend(state.focusDuration);
 
-            // Switch to break based on updated backend state
-            const sessions = backendData.totalSessions;
-            const isLongBreak = sessions > 0 && sessions % 4 === 0;
+            // Update UI
+            updateStatsUI();
 
-            state.currentMode = "break";
-            state.timeLeft = isLongBreak ? state.longBreakDuration * 60 : state.shortBreakDuration * 60;
+            showNotification('Focus Complete!', `Session ${state.completedSessions} done. ${state.totalEXP} EXP earned!`);
 
-            console.log(`[Focus Timer] Break after session ${sessions}`);
+            // Determine next break type
+            if (state.sessionInCycle === 4) {
+                // Completed a full set - long break
+                state.currentMode = 'longBreak';
+                state.timeLeft = state.longBreakDuration * 60;
+                state.sessionInCycle = 1; // Reset cycle
+            } else {
+                // Short break
+                state.currentMode = 'shortBreak';
+                state.timeLeft = state.shortBreakDuration * 60;
+                state.sessionInCycle++;
+            }
 
         } else {
-            // BREAK COMPLETION - NO backend call
-            showNotification(
-                "Break Over! ",
-                "Your break is complete. Ready to focus again?"
-            );
+            // BREAK COMPLETE - no backend call, no EXP
+            showNotification('Break Over!', 'Ready to focus? Click Start to begin.');
 
-            state.currentMode = "focus";
+            state.currentMode = 'focus';
             state.timeLeft = state.focusDuration * 60;
-
-            console.log('[Focus Timer] Break complete, ready to focus');
         }
 
-        // Reset for next session
-        state.currentSessionId = null;
-        state.savingInProgress = false;
-
-        // Update UI
         updateDisplay();
-        updateButton();
         updatePhaseLabel();
+        updateDots();
         flashScreen();
     }
 
@@ -2474,46 +2468,43 @@ async function renderPomodoroTimer(container) {
     // TIMER CONTROLS
     // ==========================================
 
-    function startTimer() {
-        if (state.isRunning || state.savingInProgress) {
-            console.log('[Focus Timer] Cannot start: running or saving');
-            return;
-        }
+    async function startTimer() {
+        if (state.isRunning) return;
 
-        // Generate unique session ID for focus sessions
-        if (state.currentMode === "focus" && !state.currentSessionId) {
-            const clientSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            state.currentSessionId = clientSessionId;
-            state.sessionSaved = false;
-            console.log('[Focus Timer] New session:', state.currentSessionId);
-        }
+        // Request notification permission on first start
+        await requestNotificationPermission();
 
         state.isRunning = true;
+        updateButton();
+
+        // Use Date.now() for drift correction
+        let expectedTime = Date.now() + 1000;
 
         state.timerInterval = setInterval(() => {
+            const drift = Date.now() - expectedTime;
+
             state.timeLeft--;
             updateDisplay();
 
-            // Stop at zero - never negative
             if (state.timeLeft <= 0) {
                 clearInterval(state.timerInterval);
                 state.timerInterval = null;
                 handleSessionComplete();
+                return;
             }
-        }, 1000);
 
-        updateButton();
+            expectedTime += 1000;
+            // Compensate for drift by adjusting next interval
+            const nextInterval = Math.max(0, 1000 - drift);
+        }, 1000);
     }
 
     function pauseTimer() {
         if (!state.isRunning) return;
-
         clearInterval(state.timerInterval);
         state.timerInterval = null;
         state.isRunning = false;
-
         updateButton();
-        console.log('[Focus Timer] Paused');
     }
 
     function toggleTimer() {
@@ -2521,58 +2512,100 @@ async function renderPomodoroTimer(container) {
         else startTimer();
     }
 
-    // Reset timer - ONLY UI, NO backend
-    function resetTimer() {
-        clearInterval(state.timerInterval);
-        state.timerInterval = null;
-        state.isRunning = false;
-        state.sessionSaved = false;
-        state.savingInProgress = false;
+    // ==========================================
+    // SETTINGS HANDLERS
+    // ==========================================
 
-        // Reset time based on current mode
-        if (state.currentMode === "focus") {
-            state.timeLeft = state.focusDuration * 60;
-        } else {
-            const sessions = backendData.totalSessions;
-            const isLongBreakSlot = sessions > 0 && sessions % 4 === 0;
-            state.timeLeft = isLongBreakSlot ? state.longBreakDuration * 60 : state.shortBreakDuration * 60;
-        }
-
-        updateDisplay();
-        updateButton();
-        updatePhaseLabel();
-
-        console.log('[Focus Timer] Timer reset (UI only)');
+    function saveSettings() {
+        const settings = {
+            focusMinutes: parseInt(focusInput.value) || 25,
+            shortBreakMinutes: parseInt(shortBreakInput.value) || 5,
+            longBreakMinutes: parseInt(longBreakInput.value) || 15
+        };
+        localStorage.setItem('focusTimerSettings', JSON.stringify(settings));
     }
 
-    // Reset stats - calls backend, then reloads
-    async function resetStats() {
-        if (!confirm("Reset all your stats? This cannot be undone.")) return;
+    function applySettings() {
+        const newFocus = parseInt(focusInput.value) || 25;
+        const newShortBreak = parseInt(shortBreakInput.value) || 5;
+        const newLongBreak = parseInt(longBreakInput.value) || 15;
 
-        const result = await resetBackendStats();
+        state.focusDuration = newFocus;
+        state.shortBreakDuration = newShortBreak;
+        state.longBreakDuration = newLongBreak;
 
-        if (result.success) {
-            await loadStats();
-            resetTimer();
-            console.log('[Focus Timer] Stats reset complete');
-        } else {
-            alert('Failed to reset stats. Please try again.');
+        // Update timer display if not running and matches current mode
+        if (!state.isRunning) {
+            if (state.currentMode === 'focus') {
+                state.timeLeft = newFocus * 60;
+            } else if (state.currentMode === 'shortBreak') {
+                state.timeLeft = newShortBreak * 60;
+            } else if (state.currentMode === 'longBreak') {
+                state.timeLeft = newLongBreak * 60;
+            }
+            updateDisplay();
         }
+
+        saveSettings();
     }
 
     // ==========================================
-    // INITIALIZATION - Load from backend ONLY
+    // EVENT LISTENERS
+    // ==========================================
+
+    startPauseBtn.addEventListener('click', toggleTimer);
+
+    focusInput.addEventListener('change', applySettings);
+    shortBreakInput.addEventListener('change', applySettings);
+    longBreakInput.addEventListener('change', applySettings);
+
+    resetStatsBtn.addEventListener('click', async () => {
+        if (!confirm('Reset all stats? This cannot be undone.')) return;
+
+        const result = await resetBackendStats();
+        if (result.success) {
+            // Reset all state
+            state.completedSessions = 0;
+            state.totalFocusMinutes = 0;
+            state.totalEXP = 0;
+            state.sessionInCycle = 1;
+            state.currentMode = 'focus';
+            state.timeLeft = state.focusDuration * 60;
+            state.isRunning = false;
+            clearInterval(state.timerInterval);
+            state.timerInterval = null;
+
+            // Reset UI to Level 1
+            updateStatsUI();
+            updateLevelUI(0);
+            updateDisplay();
+            updateButton();
+            updatePhaseLabel();
+            updateDots();
+
+            // Clear notification to user
+            alert('Stats reset! Starting fresh.');
+        } else {
+            alert('Failed to reset stats. Please try again.');
+        }
+    });
+
+    // ==========================================
+    // INITIALIZATION
     // ==========================================
 
     console.log('[Focus Timer] Initializing...');
 
-    await loadStats();
+    // Load stats from backend
+    await loadStatsFromBackend();
 
+    // Initial UI update
     updateDisplay();
     updateButton();
     updatePhaseLabel();
+    updateDots();
 
-    console.log('[Focus Timer] Ready. Backend state:', backendData);
+    console.log('[Focus Timer] Ready. State:', { sessions: state.completedSessions, exp: state.totalEXP, cycle: state.sessionInCycle });
 }
 
 function renderClutchAI(container) {
