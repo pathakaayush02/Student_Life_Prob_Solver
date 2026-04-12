@@ -2380,7 +2380,8 @@ async function renderPomodoroTimer(container) {
                 method: 'POST',
                 body: JSON.stringify({
                     duration: duration,
-                    clientSessionId: sessionId
+                    clientSessionId: sessionId,
+                    completed: true
                 })
             });
 
@@ -2392,10 +2393,10 @@ async function renderPomodoroTimer(container) {
         }
     }
 
-    // Reset stats - POST method as specified
+    // Reset stats - POST /api/focus-sessions/reset
     async function resetBackendStats() {
         try {
-            await apiCall('/api/focus-reset', { method: 'POST' });
+            await apiCall('/api/focus-sessions/reset', { method: 'POST' });
             console.log('[Focus Timer] Stats reset successfully');
             return { success: true };
         } catch (err) {
@@ -2481,7 +2482,8 @@ async function renderPomodoroTimer(container) {
 
         // Generate unique session ID for focus sessions
         if (state.currentMode === "focus" && !state.currentSessionId) {
-            state.currentSessionId = `focus-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            const clientSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            state.currentSessionId = clientSessionId;
             state.sessionSaved = false;
             console.log('[Focus Timer] New session:', state.currentSessionId);
         }
