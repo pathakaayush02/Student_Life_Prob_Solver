@@ -912,7 +912,8 @@ function renderExpenseTracker(container) {
         let savingsPercent = Math.floor((savingsAmount / totalExpense) * 100);
         if (savingsPercent > 100) savingsPercent = 100;
 
-        let newPoints = savingsPercent >= 10 ? savingsPercent : 0;
+        // Use savings points from API response if available, otherwise calculate locally
+        let newPoints = settings?.savingsPoints ?? (savingsPercent >= 10 ? savingsPercent : 0);
 
         savingsPercentDisplay.textContent = `${savingsPercent}%`;
         const currentPoints = parseInt(savingsPointsDisplay.textContent || '0');
@@ -935,6 +936,29 @@ function renderExpenseTracker(container) {
         }
     };
 
+    // Monthly auto-reset check
+    const checkMonthlyReset = async () => {
+        const currentMonthYear = `${new Date().getMonth() + 1}-${new Date().getFullYear()}`;
+        const lastResetMonth = localStorage.getItem('expense_last_reset_month');
+
+        if (lastResetMonth !== currentMonthYear) {
+            try {
+                const res = await fetch('https://student-life-backend-production.up.railway.app/api/expenses/reset-monthly', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    cache: 'no-store'
+                });
+                if (res.ok) {
+                    localStorage.setItem('expense_last_reset_month', currentMonthYear);
+                    // Refresh to show 0s
+                    await loadExpenses();
+                }
+            } catch (err) {
+                console.error('[Expense Tracker] Monthly reset check failed:', err);
+            }
+        }
+    };
+
     const loadExpenses = async () => {
         try {
             const [expRes, settingsRes] = await Promise.all([
@@ -942,7 +966,7 @@ function renderExpenseTracker(container) {
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     cache: 'no-store'
                 }),
-                fetch('https://student-life-backend-production.up.railway.app/api/expense-settings', {
+                fetch('https://student-life-backend-production.up.railway.app/api/expenses/settings', {
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     cache: 'no-store'
                 })
@@ -1070,8 +1094,9 @@ function renderExpenseTracker(container) {
         }
 
         try {
-            const res = await fetch('https://student-life-backend-production.up.railway.app/api/expense-settings', {
-                method: 'PATCH',
+            // First update the savings target
+            const res = await fetch('https://student-life-backend-production.up.railway.app/api/expenses/settings', {
+                method: 'PUT',
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 cache: 'no-store',
                 body: JSON.stringify({ savingsTarget: val })
@@ -1084,6 +1109,12 @@ function renderExpenseTracker(container) {
             }
 
             if (res.ok) {
+                // Then recalculate savings points
+                await fetch('https://student-life-backend-production.up.railway.app/api/expenses/settings/recalculate', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    cache: 'no-store'
+                });
                 await loadExpenses();
             }
         } catch (err) {
@@ -1091,7 +1122,8 @@ function renderExpenseTracker(container) {
         }
     });
 
-    loadExpenses();
+    // Run monthly reset check first, then load expenses
+    checkMonthlyReset().then(() => loadExpenses());
 }
 
 /* -------------------------------------------------------------------------- */
