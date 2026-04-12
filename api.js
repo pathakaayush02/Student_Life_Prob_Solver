@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://student-life-backend-1.onrender.com';
+const API_BASE_URL = 'https://student-life-backend.up.railway.app';
 
 function getAuthHeaders() {
     const token = localStorage.getItem('token');
@@ -6,19 +6,6 @@ function getAuthHeaders() {
     if (token) headers['Authorization'] = `Bearer ${token}`;
     return headers;
 }
-
-// Keep server awake - ping every 10 minutes
-function keepServerAwake() {
-    try {
-        fetch(`${API_BASE_URL}/health`, { method: 'GET' });
-    } catch (e) {
-        // Silently ignore errors
-    }
-}
-
-// Start pinging immediately and every 10 minutes (600000ms)
-keepServerAwake();
-setInterval(keepServerAwake, 600000);
 
 // Toast notification for cold start - only shows after 15s delay
 let coldStartToastTimeout = null;
