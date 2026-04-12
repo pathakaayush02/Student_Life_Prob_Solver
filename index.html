@@ -36,6 +36,15 @@
                 // Silently ignore errors
             }
         });
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/Student_Life_Prob_Solver/sw.js')
+                    .then(reg => console.log('SW registered:', reg.scope))
+                    .catch(err => console.error('SW registration failed:', err));
+            });
+        }
     </script>
     <style>
         /* Auth Page Styles - Matching main theme */

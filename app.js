@@ -1108,8 +1108,9 @@ function renderStressChecker(container) {
                 <div id="stressForm">
                     <div id="stressQuestions"></div>
                     <p id="stressValidation" class="text-danger" style="display: none;">Please answer all 10 questions to see your result.</p>
-                    <div style="text-align: center; margin-top: 2rem;">
+                    <div style="text-align: center; margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
                         <button type="button" onclick="calculateStress()" class="btn btn-primary btn-large">See My Stress Meter</button>
+                        <button type="button" onclick="resetStress()" class="btn btn-ghost">Reset Selections</button>
                     </div>
                 </div>
 

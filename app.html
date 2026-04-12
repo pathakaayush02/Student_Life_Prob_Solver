@@ -177,7 +177,7 @@
                 <div class="hero-buttons">
                   <a href="#tools" class="btn-explore">Explore Tools</a>
                   <a href="https://docs.google.com/forms/d/e/1FAIpQLSfVF1VCVw0xQmhyLHAB4AM8tKy0li6130Zp5B88F-1lzLsojA/viewform?usp=publish-editor" target="_blank" rel="noopener" class="btn-survey">Take the Survey</a>
-                  <button id="pwa-install-btn" onclick="installPWA()">
+                  <button id="pwa-install-btn" style="display: none;">
                     📲 Download App
                   </button>
                 </div>
@@ -295,6 +295,60 @@
 
     <script src="app.js"></script>
     <script>
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/Student_Life_Prob_Solver/sw.js')
+                    .then(reg => console.log('SW registered:', reg.scope))
+                    .catch(err => console.error('SW registration failed:', err));
+            });
+        }
+
+        // PWA Install Logic
+        let deferredPrompt = null;
+        const installBtn = document.getElementById('pwa-install-btn');
+
+        function showInstallButton() {
+            if (installBtn) installBtn.style.display = 'inline-block';
+        }
+
+        function hideInstallButton() {
+            if (installBtn) installBtn.style.display = 'none';
+        }
+
+        // Listen for beforeinstallprompt event
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            showInstallButton();
+            console.log('PWA install prompt ready');
+        });
+
+        // Handle install button click
+        installBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log('PWA install outcome:', outcome);
+            deferredPrompt = null;
+            if (outcome === 'accepted') {
+                hideInstallButton();
+            }
+        });
+
+        // Listen for appinstalled event
+        window.addEventListener('appinstalled', () => {
+            deferredPrompt = null;
+            hideInstallButton();
+            console.log('PWA installed successfully');
+        });
+
+        // Hide button if already installed
+        if (window.matchMedia('(display-mode: standalone)').matches || 
+            window.navigator.standalone === true) {
+            hideInstallButton();
+        }
+
         // Global state management
         window.AppState = {
             currentUser: null,
