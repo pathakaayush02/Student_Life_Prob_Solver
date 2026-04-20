@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://student-life-backend-production.up.railway.app';
+const API_BASE_URL = 'https://student-life-backend-1.onrender.com';
 
 function getAuthHeaders() {
     const token = localStorage.getItem('token');
@@ -57,54 +57,81 @@ function showColdStartToast() {
     }, 5000);
 }
 
-async function apiFetch(endpoint, options = {}, timeoutMs = 55000) {
+async function apiFetch(endpoint, options = {}, timeoutMs = 60000) {
     const url = `${API_BASE_URL}${endpoint}`;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-    // Schedule cold start toast - will be cancelled if request succeeds quickly
-    scheduleColdStartToast();
-
-    const fetchOptions = {
-        ...options,
-        headers: { ...getAuthHeaders(), ...(options.headers || {}) },
-        cache: 'no-store',
-        signal: controller.signal
+    const isRetryableMethod = !options.method || options.method === 'GET' || options.method === 'POST';
+    const isRetryableError = (error) => {
+        // Don't retry auth errors
+        if (error.status === 401 || error.status === 403) return false;
+        // Retry network errors and timeouts
+        return error.name === 'TypeError' || 
+               error.name === 'AbortError' || 
+               error.message?.includes('Failed to fetch') ||
+               error.isTimeout;
     };
 
-    console.log(`[API] ${fetchOptions.method || 'GET'} ${endpoint}`);
+    const attemptFetch = async (isRetry = false) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-    try {
-        const response = await fetch(url, fetchOptions);
-        clearTimeout(timeoutId);
-        // Request succeeded - cancel the scheduled toast
-        cancelColdStartToast();
-        console.log(`[API] ${endpoint} - Status: ${response.status}`);
+        if (!isRetry) {
+            scheduleColdStartToast();
+        }
 
-        let data = {};
-        try { data = await response.json(); } catch (e) {}
+        const fetchOptions = {
+            ...options,
+            headers: { ...getAuthHeaders(), ...(options.headers || {}) },
+            cache: 'no-store',
+            signal: controller.signal
+        };
 
-        if (!response.ok) {
-            const error = new Error(data.message || `Failed: ${response.status}`);
-            error.status = response.status;
+        try {
+            const response = await fetch(url, fetchOptions);
+            clearTimeout(timeoutId);
+            cancelColdStartToast();
+
+            let data = {};
+            try { data = await response.json(); } catch (e) {}
+
+            if (!response.ok) {
+                const error = new Error(data.message || `Failed: ${response.status}`);
+                error.status = response.status;
+                error.endpoint = endpoint;
+                throw error;
+            }
+            return data;
+        } catch (error) {
+            clearTimeout(timeoutId);
+            
+            // Check if we should retry
+            if (!isRetry && isRetryableMethod && isRetryableError(error)) {
+                // Wait 3 seconds then retry once
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                return attemptFetch(true);
+            }
+            
+            // Transform error messages for network/timeout errors
+            if (error.name === 'AbortError') {
+                const err = new Error('Server is warming up, please wait a moment...');
+                err.endpoint = endpoint;
+                err.isTimeout = true;
+                err.isWarming = true;
+                throw err;
+            }
+            
+            if (error.name === 'TypeError' || error.message?.includes('Failed to fetch')) {
+                const err = new Error('Still connecting... please try again in a moment');
+                err.endpoint = endpoint;
+                err.isNetworkError = true;
+                throw err;
+            }
+            
             error.endpoint = endpoint;
             throw error;
         }
-        return data;
-    } catch (error) {
-        clearTimeout(timeoutId);
-        // Only show toast on actual timeout/abort (after 15s delay already passed)
-        // or on network errors
-        if (error.name === 'AbortError') {
-            const err = new Error(`Timeout: ${endpoint}`);
-            err.endpoint = endpoint;
-            err.isTimeout = true;
-            throw err;
-        }
-        error.endpoint = endpoint;
-        console.error(`[API] ${endpoint} - Error:`, error.message);
-        throw error;
-    }
+    };
+
+    return attemptFetch(false);
 }
 
 const apiLogin = (email, password) => apiFetch('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
@@ -119,3 +146,16 @@ function clearAllUserState() {
     ['token', 'clutch_exp', 'sl_study_tasks', 'slps_expenses', 'sl_savings_amount', 'sl_savings_points', 'slps_stress', 'slps_career_saved'].forEach(k => localStorage.removeItem(k));
     console.log('[Auth] All user state cleared');
 }
+
+// Keep-alive ping every 8 minutes to prevent Render free tier from sleeping (under 10 min threshold)
+function keepServerAwake() {
+    try {
+        fetch(`${API_BASE_URL}/health`, { method: 'GET', cache: 'no-store' }).catch(() => {});
+    } catch (e) {
+        // Silently ignore all errors
+    }
+}
+// Ping every 8 minutes (480000 ms)
+setInterval(keepServerAwake, 480000);
+// Initial ping on script load
+keepServerAwake();

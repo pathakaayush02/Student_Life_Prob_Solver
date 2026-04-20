@@ -28,13 +28,23 @@
             }
         })();
 
-        // Warm-up server on page load
+        // Double silent ping to warm up server - immediate and after 5 seconds
         document.addEventListener('DOMContentLoaded', function() {
-            try {
-                fetch('https://student-life-backend-production.up.railway.app/health', { method: 'GET' });
-            } catch (e) {
-                // Silently ignore errors
-            }
+            const healthUrl = 'https://student-life-backend-1.onrender.com/health';
+            
+            // First ping: immediate
+            try { fetch(healthUrl, { method: 'GET' }).catch(() => {}); } catch (e) {}
+            
+            // Second ping: after 5 seconds
+            setTimeout(() => {
+                try { fetch(healthUrl, { method: 'GET' }).catch(() => {}); } catch (e) {}
+            }, 5000);
+            
+            // Hide warming indicator after 6 seconds
+            setTimeout(() => {
+                const warmingEl = document.getElementById('serverWarming');
+                if (warmingEl) warmingEl.style.display = 'none';
+            }, 6000);
         });
 
         // Service Worker Registration
@@ -385,6 +395,7 @@
                         <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password" required>
                     </div>
                     <button type="submit" class="auth-submit" id="loginBtn">Sign In</button>
+                    <p id="serverWarming" style="text-align: center; margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted); display: block;">Connecting to server...</p>
                 </form>
 
                 <form id="signupForm" class="auth-form" onsubmit="handleSignup(event)">
@@ -473,9 +484,9 @@
                                        error.message?.includes('Failed to fetch') ||
                                        error.isTimeout;
 
-                if (isNetworkError && retryCount < 3) {
-                    // Show friendly retry message
-                    showMessage('Connecting to server, retrying in 5 seconds...', 'error');
+                if (isNetworkError && retryCount < 2) {
+                    // Show waking up message and auto-retry
+                    showMessage('Server is waking up, retrying in 5 seconds...', 'error');
 
                     // Wait 5 seconds then retry
                     setTimeout(() => {
@@ -484,9 +495,9 @@
                     return; // Keep button disabled during retry wait
                 }
 
-                // Max retries reached or other error
+                // Max retries reached (2 total) or other error
                 if (isNetworkError) {
-                    showMessage('Server is taking too long to respond. Please try again in a moment.', 'error');
+                    showMessage('Still connecting... please try again in a moment', 'error');
                 } else {
                     showMessage(error.message || 'Login failed. Please try again.', 'error');
                 }
